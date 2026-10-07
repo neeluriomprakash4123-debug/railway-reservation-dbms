@@ -1,18 +1,18 @@
-/**
+﻿/**
  * Railway Reservation System
  * API Client
  *
  * Frontend
- *    ↓
+ *    â†“
  * ngrok
- *    ↓
+ *    â†“
  * Flask Backend
- *    ↓
+ *    â†“
  * MySQL Database
  */
 
 const API_CONFIG = {
-    BASE_URL: "https://obsession-steed-vanish.ngrok-free.dev",
+    BASE_URL: "http://127.0.0.1:5000",
     USE_MOCK: false
 };
 
@@ -462,3 +462,4 @@ console.log(
     "Mock mode:",
     API_CONFIG.USE_MOCK
 );
+

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Ticket | BharatRail System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚆</text></svg>">
+</head>
+<body>
+
+  <!-- Top System Notice Bar -->
+  <aside class="top-notice-bar" aria-label="System status">
+    <div>
+      <span>🚆 Booking Flow: Schedule Selection & Passenger Assignment</span>
+    </div>
+    <div class="mode-pill" title="Toggle Backend Mode">
+      <span class="mode-dot"></span>
+      Backend Mode: Mock API
+    </div>
+  </aside>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar" role="navigation" aria-label="Main Navigation">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon">🚆</div>
+        <div class="brand-text">
+          BharatRail
+          <small>Journey Management System</small>
+        </div>
+      </a>
+
+      <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">☰</button>
+
+      <ul class="nav-links">
+        <li class="nav-item"><a href="index.html">Home</a></li>
+        <li class="nav-item"><a href="trains.html">Search Trains</a></li>
+        <li class="nav-item"><a href="pnr-status.html">PNR Status</a></li>
+        <li class="nav-item"><a href="my-bookings.html">My Bookings</a></li>
+        <li class="nav-item"><a href="passenger-register.html">Register Passenger</a></li>
+        <li class="nav-item"><a href="cancel-ticket.html">Cancel Ticket</a></li>
+        <li class="nav-item"><a href="admin.html" class="btn btn-sm nav-btn-admin">Admin Portal</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div class="container">
+
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Book Train Ticket</h1>
+          <p class="page-subtitle">Assign passenger, select coach & seat, verify fare breakdown and confirm reservation</p>
+        </div>
+        <div>
+          <span class="page-badge">Entities: BOOKING & TICKET</span>
+        </div>
+      </div>
+
+      <!-- Main Booking Form Layout -->
+      <form id="book-ticket-form">
+        <div class="booking-summary-grid">
+
+          <!-- Left Column: Passenger & Seat Selection -->
+          <div>
+            <!-- Train Journey Card -->
+            <div class="card" id="train-summary-card">
+              <div class="loading-state">
+                <div class="spinner spinner-primary"></div>
+                <p>Loading journey schedule details...</p>
+              </div>
+            </div>
+
+            <!-- Passenger Selection Card -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">👤 Select Traveling Passenger</h3>
+                <a href="passenger-register.html" class="btn btn-outline btn-sm">+ Register New</a>
+              </div>
+
+              <div class="form-group">
+                <label for="select_passenger_id" class="form-label">
+                  Choose Registered Passenger <span class="required">*</span>
+                </label>
+                <select id="select_passenger_id" class="form-control" required>
+                  <option value="">Loading passenger list...</option>
+                </select>
+              </div>
+
+              <div id="passenger-preview-box" style="margin-top: 1rem;">
+                <!-- Filled when passenger is selected -->
+              </div>
+            </div>
+
+            <!-- Class & Coach Seat Selection Card -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">💺 Class, Coach & Seat Selection</h3>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="ticket_class" class="form-label">Travel Class <span class="required">*</span></label>
+                  <select id="ticket_class" class="form-control" required>
+                    <option value="3A">AC 3 Tier (3A)</option>
+                    <option value="2A">AC 2 Tier (2A)</option>
+                    <option value="1A">AC 1st Class (1A)</option>
+                    <option value="SL">Sleeper Class (SL)</option>
+                    <option value="CC">AC Chair Car (CC)</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="ticket_coach" class="form-label">Coach Allotment <span class="required">*</span></label>
+                  <select id="ticket_coach" class="form-control" required>
+                    <!-- Populated dynamically based on class -->
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="ticket_seat_no" class="form-label">Seat Number <span class="required">*</span></label>
+                  <input type="text" id="ticket_seat_no" class="form-control" readonly required value="24">
+                </div>
+              </div>
+
+              <!-- Interactive Seat Matrix -->
+              <div class="seat-grid-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                  <strong style="font-size: 0.88rem; color: #334155;">Select Your Preferred Seat:</strong>
+                  <span style="font-size: 0.78rem; color: #64748b;">(Click an available number)</span>
+                </div>
+
+                <div id="seat-grid" class="seat-grid">
+                  <!-- Generated by book-ticket.js -->
+                </div>
+
+                <div class="seat-legend">
+                  <div class="seat-legend-item">
+                    <span class="seat-legend-dot" style="background: white;"></span>
+                    <span>Available</span>
+                  </div>
+                  <div class="seat-legend-item">
+                    <span class="seat-legend-dot" style="background: #2563eb;"></span>
+                    <span>Selected</span>
+                  </div>
+                  <div class="seat-legend-item">
+                    <span class="seat-legend-dot" style="background: #e2e8f0;"></span>
+                    <span>Booked</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Fare Calculation & Confirmation Action -->
+          <div>
+            <div class="card" style="position: sticky; top: 90px;">
+              <div class="card-header">
+                <h3 class="card-title">💳 Fare Breakdown</h3>
+                <span class="badge badge-success">Live Rate</span>
+              </div>
+
+              <div class="summary-box">
+                <div class="summary-row">
+                  <span>Base Ticket Fare:</span>
+                  <strong id="fare-base">₹0</strong>
+                </div>
+                <div class="summary-row">
+                  <span>Reservation Surcharge:</span>
+                  <strong id="fare-res-fee">₹40</strong>
+                </div>
+                <div class="summary-row">
+                  <span>Railway GST (5%):</span>
+                  <strong id="fare-gst">₹0</strong>
+                </div>
+                <div class="summary-row total">
+                  <span>Total Payable Fare:</span>
+                  <strong id="fare-total" style="color: #1e3a8a;">₹0</strong>
+                </div>
+              </div>
+
+              <div style="margin-top: 1.5rem; background: #eff6ff; padding: 1rem; border-radius: 8px; border: 1px solid #bfdbfe; font-size: 0.82rem; color: #1e40af;">
+                <strong>🛡️ Booking Guarantee:</strong>
+                <p style="margin-top: 0.25rem;">Instant confirmed seat allocation. Secure 256-bit payment integration on next step.</p>
+              </div>
+
+              <div style="margin-top: 1.5rem;">
+                <button type="submit" id="confirm-booking-btn" class="btn btn-accent btn-lg btn-block">
+                  Proceed to Payment ➔
+                </button>
+              </div>
+
+              <div style="text-align: center; margin-top: 1rem;">
+                <a href="trains.html" style="font-size: 0.85rem; color: #64748b;">← Change Train</a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </form>
+
+    </div>
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <h4>🚆 BharatRail Reservation System</h4>
+        <p>A comprehensive Database Management Systems project modeling real-world passenger reservations, inventory schedules and payment lifecycle.</p>
+      </div>
+      <div class="footer-col">
+        <h5>User Services</h5>
+        <ul>
+          <li><a href="trains.html">Search Trains</a></li>
+          <li><a href="book-ticket.html">Book Ticket</a></li>
+          <li><a href="passenger-register.html">Passenger Registration</a></li>
+          <li><a href="pnr-status.html">Check PNR Status</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Manage Journey</h5>
+        <ul>
+          <li><a href="my-bookings.html">My Bookings</a></li>
+          <li><a href="cancel-ticket.html">Cancel Ticket</a></li>
+          <li><a href="admin.html">Admin Portal</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Backend & API</h5>
+        <ul>
+          <li><a href="#" onclick="window.RailwayAPI.resetMockData(); window.showToast('Demo data reset!', 'success'); setTimeout(() => location.reload(), 600); return false;">Reset Demo Data</a></li>
+          <li><a href="admin.html">API Dashboard</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 Railway Ticket Reservation & Journey Management System (DBMS Project)</div>
+      <div>Designed with HTML5, CSS3 & REST API architecture for Python Flask + MySQL</div>
+    </div>
+  </footer>
+
+  <!-- Core Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/pages/book-ticket.js"></script>
+</body>
+</html>

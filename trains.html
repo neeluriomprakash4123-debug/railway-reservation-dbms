@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search & Book Trains | BharatRail System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚆</text></svg>">
+</head>
+<body>
+
+  <!-- Top System Notice Bar -->
+  <aside class="top-notice-bar" aria-label="System status">
+    <div>
+      <span>🚆 Train Search & Live Schedule Inventory</span>
+    </div>
+    <div class="mode-pill" title="Toggle Backend Mode">
+      <span class="mode-dot"></span>
+      Backend Mode: Mock API
+    </div>
+  </aside>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar" role="navigation" aria-label="Main Navigation">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon">🚆</div>
+        <div class="brand-text">
+          BharatRail
+          <small>Journey Management System</small>
+        </div>
+      </a>
+
+      <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">☰</button>
+
+      <ul class="nav-links">
+        <li class="nav-item"><a href="index.html">Home</a></li>
+        <li class="nav-item"><a href="trains.html">Search Trains</a></li>
+        <li class="nav-item"><a href="pnr-status.html">PNR Status</a></li>
+        <li class="nav-item"><a href="my-bookings.html">My Bookings</a></li>
+        <li class="nav-item"><a href="passenger-register.html">Register Passenger</a></li>
+        <li class="nav-item"><a href="cancel-ticket.html">Cancel Ticket</a></li>
+        <li class="nav-item"><a href="admin.html" class="btn btn-sm nav-btn-admin">Admin Portal</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div class="container">
+
+      <!-- Page Header & Filters -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Available Trains & Schedules</h1>
+          <p class="page-subtitle">Search schedules, choose travel class, inspect seat availability and book your journey</p>
+        </div>
+        <div>
+          <span id="results-count" class="page-badge">Loading Trains...</span>
+        </div>
+      </div>
+
+      <!-- Search Filter Bar -->
+      <div class="card" style="padding: 1.25rem; margin-bottom: 2rem;">
+        <form id="train-search-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) auto; gap: 1rem; align-items: flex-end;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="search_source_station" class="form-label">From Station</label>
+            <select id="search_source_station" class="form-control">
+              <option value="">All Stations</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="search_dest_station" class="form-label">To Station</label>
+            <select id="search_dest_station" class="form-control">
+              <option value="">All Stations</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="search_journey_date" class="form-label">Journey Date</label>
+            <input type="date" id="search_journey_date" class="form-control">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="filter_train_type" class="form-label">Train Type</label>
+            <select id="filter_train_type" class="form-control">
+              <option value="">All Train Types</option>
+              <option value="Rajdhani Express">Rajdhani Express</option>
+              <option value="Vande Bharat Express">Vande Bharat Express</option>
+              <option value="Shatabdi Express">Shatabdi Express</option>
+              <option value="Duronto Express">Duronto Express</option>
+              <option value="Superfast Express">Superfast Express</option>
+            </select>
+          </div>
+
+          <div>
+            <button type="submit" class="btn btn-primary" style="height: 44px; width: 100%;">
+              Filter 🔍
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Loading Indicator -->
+      <div id="search-loading" class="loading-state" style="display: none;">
+        <div class="spinner spinner-primary"></div>
+        <p style="margin-top: 0.75rem;">Querying database for available train schedules...</p>
+      </div>
+
+      <!-- Train Results Container -->
+      <div id="trains-container" class="train-results-list">
+        <!-- Rendered by train-search.js -->
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <h4>🚆 BharatRail Reservation System</h4>
+        <p>A comprehensive Database Management Systems project modeling real-world passenger reservations, inventory schedules and payment lifecycle.</p>
+      </div>
+      <div class="footer-col">
+        <h5>User Services</h5>
+        <ul>
+          <li><a href="trains.html">Search Trains</a></li>
+          <li><a href="book-ticket.html">Book Ticket</a></li>
+          <li><a href="passenger-register.html">Passenger Registration</a></li>
+          <li><a href="pnr-status.html">Check PNR Status</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Manage Journey</h5>
+        <ul>
+          <li><a href="my-bookings.html">My Bookings</a></li>
+          <li><a href="cancel-ticket.html">Cancel Ticket</a></li>
+          <li><a href="admin.html">Admin Portal</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Backend & API</h5>
+        <ul>
+          <li><a href="#" onclick="window.RailwayAPI.resetMockData(); window.showToast('Demo data reset!', 'success'); setTimeout(() => location.reload(), 600); return false;">Reset Demo Data</a></li>
+          <li><a href="admin.html">API Dashboard</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 Railway Ticket Reservation & Journey Management System (DBMS Project)</div>
+      <div>Designed with HTML5, CSS3 & REST API architecture for Python Flask + MySQL</div>
+    </div>
+  </footer>
+
+  <!-- Core Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/pages/train-search.js"></script>
+</body>
+</html>

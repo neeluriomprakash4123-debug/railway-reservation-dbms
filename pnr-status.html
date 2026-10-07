@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PNR Status Enquiry | BharatRail System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚆</text></svg>">
+</head>
+<body>
+
+  <!-- Top System Notice Bar -->
+  <aside class="top-notice-bar" aria-label="System status">
+    <div>
+      <span>🔍 Passenger Name Record (PNR) Live Enquiry System</span>
+    </div>
+    <div class="mode-pill" title="Toggle Backend Mode">
+      <span class="mode-dot"></span>
+      Backend Mode: Mock API
+    </div>
+  </aside>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar" role="navigation" aria-label="Main Navigation">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon">🚆</div>
+        <div class="brand-text">
+          BharatRail
+          <small>Journey Management System</small>
+        </div>
+      </a>
+
+      <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">☰</button>
+
+      <ul class="nav-links">
+        <li class="nav-item"><a href="index.html">Home</a></li>
+        <li class="nav-item"><a href="trains.html">Search Trains</a></li>
+        <li class="nav-item"><a href="pnr-status.html">PNR Status</a></li>
+        <li class="nav-item"><a href="my-bookings.html">My Bookings</a></li>
+        <li class="nav-item"><a href="passenger-register.html">Register Passenger</a></li>
+        <li class="nav-item"><a href="cancel-ticket.html">Cancel Ticket</a></li>
+        <li class="nav-item"><a href="admin.html" class="btn btn-sm nav-btn-admin">Admin Portal</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div class="container-narrow">
+
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">PNR Status Enquiry</h1>
+          <p class="page-subtitle">Inspect live passenger booking confirmation status, coach & seat berth allocation</p>
+        </div>
+        <div>
+          <span class="page-badge">Inquiry API: GET /api/bookings/:id</span>
+        </div>
+      </div>
+
+      <!-- PNR Search Card -->
+      <div class="card">
+        <form id="pnr-search-form" style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end;">
+          <div style="flex: 1; min-width: 250px;">
+            <label for="pnr-input" class="form-label">
+              Enter 8-digit PNR / Booking ID <span class="required">*</span>
+            </label>
+            <div class="input-with-icon">
+              <span class="input-icon">🔍</span>
+              <input type="text" id="pnr-input" class="form-control" placeholder="e.g. BK829140" required style="font-family: monospace; font-size: 1.1rem; text-transform: uppercase;">
+            </div>
+          </div>
+          <div>
+            <button type="submit" id="pnr-search-btn" class="btn btn-primary btn-lg" style="height: 48px;">
+              Check Status ➔
+            </button>
+          </div>
+        </form>
+
+        <div style="margin-top: 1rem; font-size: 0.8rem; color: #64748b; display: flex; gap: 0.5rem; align-items: center;">
+          <span>Sample demo PNRs:</span>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('pnr-input').value='BK829140'; searchPnr('BK829140');">BK829140</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('pnr-input').value='BK541920'; searchPnr('BK541920');">BK541920</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('pnr-input').value='BK730219'; searchPnr('BK730219');">BK730219</button>
+        </div>
+      </div>
+
+      <div id="pnr-loading" class="loading-state" style="display: none;">
+        <div class="spinner spinner-primary"></div>
+        <p style="margin-top: 0.5rem;">Querying database for PNR status...</p>
+      </div>
+
+      <!-- PNR Result Card -->
+      <div id="pnr-result-card" class="card" style="display: none;">
+        <div class="card-header">
+          <div>
+            <span style="font-size: 0.75rem; color: #64748b; text-transform: uppercase;">PNR Query Result</span>
+            <div id="res-pnr" style="font-size: 1.5rem; font-weight: 800; font-family: monospace; color: #1e3a8a;">
+              BK000000
+            </div>
+          </div>
+          <div>
+            <span id="res-status" class="badge badge-confirmed">CONFIRMED</span>
+          </div>
+        </div>
+
+        <!-- Journey Tracker Timeline -->
+        <div class="pnr-timeline">
+          <div id="timeline-step-1" class="pnr-step completed">
+            <div class="pnr-step-dot">1</div>
+            <div class="pnr-step-label">Booking Done</div>
+          </div>
+          <div id="timeline-step-2" class="pnr-step completed">
+            <div class="pnr-step-dot">2</div>
+            <div class="pnr-step-label">Seat Confirmed</div>
+          </div>
+          <div id="timeline-step-3" class="pnr-step active">
+            <div class="pnr-step-dot">3</div>
+            <div class="pnr-step-label">Chart Prepared</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+          <h4 style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin-bottom: 0.75rem;">
+            Passenger & Journey Details
+          </h4>
+
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem;">
+            <div class="form-row" style="margin-bottom: 1rem;">
+              <div>
+                <span style="font-size: 0.75rem; color: #64748b;">Passenger:</span>
+                <div id="res-passenger" style="font-weight: 700; color: #0f172a; font-size: 1rem;">Passenger Name</div>
+                <div id="res-passenger-meta" style="font-size: 0.8rem; color: #64748b;">Details</div>
+              </div>
+
+              <div>
+                <span style="font-size: 0.75rem; color: #64748b;">Coach & Seat Allotment:</span>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #1e3a8a;">
+                  Coach <span id="res-coach">B1</span> • Seat <span id="res-seat">24</span>
+                </div>
+                <div style="font-size: 0.8rem; color: #64748b;">Class: <strong id="res-class">3A</strong></div>
+              </div>
+            </div>
+
+            <div class="form-row" style="border-top: 1px solid #e2e8f0; padding-top: 1rem;">
+              <div>
+                <span style="font-size: 0.75rem; color: #64748b;">Train Name:</span>
+                <div id="res-train" style="font-weight: 700; color: #0f172a;">Train Details</div>
+                <div id="res-route" style="font-size: 0.82rem; color: #64748b;">Route</div>
+              </div>
+
+              <div>
+                <span style="font-size: 0.75rem; color: #64748b;">Journey Schedule:</span>
+                <div id="res-date" style="font-weight: 700; color: #0f172a;">Date</div>
+                <div style="font-size: 0.82rem; color: #64748b;">
+                  Dep: <strong id="res-dep">--</strong> • Arr: <strong id="res-arr">--</strong>
+                </div>
+              </div>
+
+              <div>
+                <span style="font-size: 0.75rem; color: #64748b;">Total Fare Paid:</span>
+                <div id="res-fare" style="font-size: 1.2rem; font-weight: 800; color: #059669;">₹0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <a id="res-cancel-btn" href="#" class="btn btn-danger btn-sm">
+            Cancel This Ticket
+          </a>
+          <a id="res-view-ticket-btn" href="#" class="btn btn-primary btn-sm">
+            View / Print E-Ticket ➔
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <h4>🚆 BharatRail Reservation System</h4>
+        <p>A comprehensive Database Management Systems project modeling real-world passenger reservations, inventory schedules and payment lifecycle.</p>
+      </div>
+      <div class="footer-col">
+        <h5>User Services</h5>
+        <ul>
+          <li><a href="trains.html">Search Trains</a></li>
+          <li><a href="book-ticket.html">Book Ticket</a></li>
+          <li><a href="passenger-register.html">Passenger Registration</a></li>
+          <li><a href="pnr-status.html">Check PNR Status</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Manage Journey</h5>
+        <ul>
+          <li><a href="my-bookings.html">My Bookings</a></li>
+          <li><a href="cancel-ticket.html">Cancel Ticket</a></li>
+          <li><a href="admin.html">Admin Portal</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Backend & API</h5>
+        <ul>
+          <li><a href="#" onclick="window.RailwayAPI.resetMockData(); window.showToast('Demo data reset!', 'success'); setTimeout(() => location.reload(), 600); return false;">Reset Demo Data</a></li>
+          <li><a href="admin.html">API Dashboard</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 Railway Ticket Reservation & Journey Management System (DBMS Project)</div>
+      <div>Designed with HTML5, CSS3 & REST API architecture for Python Flask + MySQL</div>
+    </div>
+  </footer>
+
+  <!-- Core Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/pages/pnr-status.js"></script>
+</body>
+</html>

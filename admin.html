@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Management Dashboard | BharatRail System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚆</text></svg>">
+</head>
+<body>
+
+  <!-- Top System Notice Bar -->
+  <aside class="top-notice-bar" aria-label="System status">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <button class="admin-mobile-toggle" aria-label="Toggle admin navigation sidebar">☰ Menu</button>
+      <span>🛡️ Administrative Master Console • Relational Database Management</span>
+    </div>
+    <div class="mode-pill" title="Toggle Backend Mode">
+      <span class="mode-dot"></span>
+      Backend Mode: Mock API
+    </div>
+  </aside>
+
+  <!-- Navbar -->
+  <nav class="navbar" role="navigation" aria-label="Main Navigation">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon">🚆</div>
+        <div class="brand-text">
+          BharatRail
+          <small>Admin Portal</small>
+        </div>
+      </a>
+
+      <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">☰</button>
+
+      <ul class="nav-links">
+        <li class="nav-item"><a href="index.html">← Back to User Site</a></li>
+        <li class="nav-item"><a href="trains.html">Search Trains</a></li>
+        <li class="nav-item"><a href="my-bookings.html">My Bookings</a></li>
+        <li class="nav-item"><a href="admin.html" class="btn btn-sm nav-btn-admin active">Admin Console</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Admin Main Layout -->
+  <div class="admin-layout">
+
+    <!-- Admin Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <h3><span>🛠️</span> Administration</h3>
+      </div>
+
+      <nav class="admin-sidebar-nav">
+        <div class="sidebar-heading">Analytics</div>
+        <a href="#section-dashboard" class="admin-nav-item active" data-section="dashboard">
+          <span>📊</span> Dashboard Overview
+        </a>
+
+        <div class="sidebar-heading">Master Data Management</div>
+        <a href="#section-passengers" class="admin-nav-item" data-section="passengers">
+          <span>👥</span> Manage Passengers
+          <span id="badge-passengers" class="nav-badge">0</span>
+        </a>
+
+        <a href="#section-trains" class="admin-nav-item" data-section="trains">
+          <span>🚆</span> Manage Trains
+          <span id="badge-trains" class="nav-badge">0</span>
+        </a>
+
+        <a href="#section-stations" class="admin-nav-item" data-section="stations">
+          <span>📍</span> Manage Stations
+          <span id="badge-stations" class="nav-badge">0</span>
+        </a>
+
+        <a href="#section-schedules" class="admin-nav-item" data-section="schedules">
+          <span>⏱️</span> Manage Schedules
+        </a>
+
+        <div class="sidebar-heading">Transactions</div>
+        <a href="#section-bookings" class="admin-nav-item" data-section="bookings">
+          <span>🎫</span> Manage Bookings
+          <span id="badge-bookings" class="nav-badge">0</span>
+        </a>
+
+        <a href="#section-payments" class="admin-nav-item" data-section="payments">
+          <span>💳</span> Manage Payments
+        </a>
+      </nav>
+
+      <div style="padding: 1rem 0.75rem; border-top: 1px solid #1e293b; font-size: 0.75rem; color: #64748b;">
+        <div>Connected to: <strong>MySQL 8.0</strong></div>
+        <div style="margin-top: 0.25rem;">Backend: <strong>Flask REST API</strong></div>
+      </div>
+    </aside>
+
+    <!-- Admin Main Body -->
+    <main class="admin-main">
+
+      <!-- ====================================================================
+           SECTION 1: DASHBOARD OVERVIEW & METRICS
+           ==================================================================== -->
+      <section id="section-dashboard" class="admin-section active">
+        <div class="admin-header">
+          <div class="admin-title-group">
+            <h2>Dashboard Overview</h2>
+            <p>Real-time relational database telemetry, inventory statistics & revenue tracking</p>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="location.reload()">
+            🔄 Refresh Metrics
+          </button>
+        </div>
+
+        <!-- 8 Required Statistics Cards Grid -->
+        <div class="stats-grid">
+          <!-- Stat 1: Total Passengers -->
+          <div class="stat-card">
+            <div class="stat-icon blue">👥</div>
+            <div class="stat-content">
+              <div class="stat-label">Total Passengers</div>
+              <div id="stat-passengers" class="stat-value">0</div>
+              <div class="stat-sub">Registered accounts</div>
+            </div>
+          </div>
+
+          <!-- Stat 2: Total Trains -->
+          <div class="stat-card">
+            <div class="stat-icon purple">🚆</div>
+            <div class="stat-content">
+              <div class="stat-label">Total Trains</div>
+              <div id="stat-trains" class="stat-value">0</div>
+              <div class="stat-sub">Active rolling stock</div>
+            </div>
+          </div>
+
+          <!-- Stat 3: Total Stations -->
+          <div class="stat-card">
+            <div class="stat-icon cyan">📍</div>
+            <div class="stat-content">
+              <div class="stat-label">Total Stations</div>
+              <div id="stat-stations" class="stat-value">0</div>
+              <div class="stat-sub">Transit nodes</div>
+            </div>
+          </div>
+
+          <!-- Stat 4: Total Bookings -->
+          <div class="stat-card">
+            <div class="stat-icon blue">🎫</div>
+            <div class="stat-content">
+              <div class="stat-label">Total Bookings</div>
+              <div id="stat-bookings" class="stat-value">0</div>
+              <div class="stat-sub">PNRs generated</div>
+            </div>
+          </div>
+
+          <!-- Stat 5: Confirmed Bookings -->
+          <div class="stat-card">
+            <div class="stat-icon green">✓</div>
+            <div class="stat-content">
+              <div class="stat-label">Confirmed</div>
+              <div id="stat-confirmed" class="stat-value" style="color: #059669;">0</div>
+              <div class="stat-sub">Confirmed tickets</div>
+            </div>
+          </div>
+
+          <!-- Stat 6: Waiting Bookings -->
+          <div class="stat-card">
+            <div class="stat-icon amber">⏳</div>
+            <div class="stat-content">
+              <div class="stat-label">Waiting / RAC</div>
+              <div id="stat-waiting" class="stat-value" style="color: #d97706;">0</div>
+              <div class="stat-sub">Waitlist backlog</div>
+            </div>
+          </div>
+
+          <!-- Stat 7: Cancelled Bookings -->
+          <div class="stat-card">
+            <div class="stat-icon red">✕</div>
+            <div class="stat-content">
+              <div class="stat-label">Cancelled</div>
+              <div id="stat-cancelled" class="stat-value" style="color: #dc2626;">0</div>
+              <div class="stat-sub">Cancelled & refunded</div>
+            </div>
+          </div>
+
+          <!-- Stat 8: Total Revenue -->
+          <div class="stat-card">
+            <div class="stat-icon green">💰</div>
+            <div class="stat-content">
+              <div class="stat-label">Total Revenue</div>
+              <div id="stat-revenue" class="stat-value" style="color: #065f46; font-size: 1.4rem;">₹0</div>
+              <div class="stat-sub">Gross verified payments</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Access Architecture Callout -->
+        <div class="card" style="margin-top: 1.5rem;">
+          <h3 class="card-title">🗄️ Relational DBMS Project Architecture</h3>
+          <p style="color: #64748b; font-size: 0.9rem; margin: 0.5rem 0 1rem;">
+            All administrative actions on this page directly manipulate standard relational tables via REST API endpoints. You can add, edit, view and delete rows across all entities.
+          </p>
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="document.querySelector('[data-section=passengers]').click()">Manage Passengers ➔</button>
+            <button class="btn btn-secondary btn-sm" onclick="document.querySelector('[data-section=trains]').click()">Manage Trains ➔</button>
+            <button class="btn btn-secondary btn-sm" onclick="document.querySelector('[data-section=stations]').click()">Manage Stations ➔</button>
+            <button class="btn btn-secondary btn-sm" onclick="document.querySelector('[data-section=schedules]').click()">Manage Schedules ➔</button>
+            <button class="btn btn-secondary btn-sm" onclick="document.querySelector('[data-section=bookings]').click()">Manage Bookings ➔</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           SECTION 2: MANAGE PASSENGERS
+           ==================================================================== -->
+      <section id="section-passengers" class="admin-section">
+        <div class="admin-header">
+          <div class="admin-title-group">
+            <h2>Manage Passengers</h2>
+            <p>Table: <code>PASSENGER (passenger_id, name, age, gender, phone, email)</code></p>
+          </div>
+          <button class="btn btn-primary" onclick="openPassengerModal('add')">
+            + Add New Passenger
+          </button>
+        </div>
+
+        <div class="section-toolbar">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-passengers" placeholder="Search by name, ID, phone, email...">
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Passenger ID</th>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Gender</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="table-body-passengers">
+              <!-- Rendered by admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           SECTION 3: MANAGE TRAINS
+           ==================================================================== -->
+      <section id="section-trains" class="admin-section">
+        <div class="admin-header">
+          <div class="admin-title-group">
+            <h2>Manage Trains</h2>
+            <p>Table: <code>TRAIN (train_id, train_name, train_type, total_seats)</code></p>
+          </div>
+          <button class="btn btn-primary" onclick="openTrainModal('add')">
+            + Add New Train
+          </button>
+        </div>
+
+        <div class="section-toolbar">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-trains" placeholder="Search by train name, ID, type...">
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Train ID</th>
+                <th>Train Name</th>
+                <th>Train Type</th>
+                <th>Total Seats</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="table-body-trains">
+              <!-- Rendered by admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           SECTION 4: MANAGE STATIONS
+           ==================================================================== -->
+      <section id="section-stations" class="admin-section">
+        <div class="admin-header">
+          <div class="admin-title-group">
+            <h2>Manage Stations</h2>
+            <p>Table: <code>STATION (station_id, station_name, city, state)</code></p>
+          </div>
+          <button class="btn btn-primary" onclick="openStationModal('add')">
+            + Add New Station
+          </button>
+        </div>
+
+        <div class="section-toolbar">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-stations" placeholder="Search by station name, city, state...">
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Station ID</th>
+                <th>Station Name</th>
+                <th>City</th>
+                <th>State</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="table-body-stations">
+              <!-- Rendered by admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           SECTION 5: MANAGE SCHEDULES
+           ==================================================================== -->
+      <section id="section-schedules" class="admin-section">
+        <div class="admin-header">
+          <div class="admin-title-group">
+            <h2>Manage Schedules</h2>
+            <p>Table: <code>SCHEDULE (schedule_id, train_id, source_station_id, dest_station_id, journey_date, departure_time, arrival_time, base_fare)</code></p>
+          </div>
+          <button class="btn btn-primary" onclick="openScheduleModal('add')">
+            + Add New Schedule
+          </button>
+        </div>
+
+        <div class="section-toolbar">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-schedules" placeholder="Search schedules by train or station...">
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Schedule ID</th>
+                <th>Train</th>
+                <th>Source</th>
+                <th>Destination</th>
+                <th>Journey Date</th>
+                <th>Timing</th>
+                <th>Base Fare</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="table-body-schedules">
+              <!-- Rendered by admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           SECTION 6: MANAGE BOOKINGS
+           ==================================================================== -->
+      <section id="section-bookings" class="admin-section">
+        <div class="admin-header">
+          <div class="admin-title-group">
+            <h2>Manage Bookings & Tickets</h2>
+            <p>Table: <code>BOOKING (booking_id, passenger_id, schedule_id, booking_date, total_fare, status)</code></p>
+          </div>
+        </div>
+
+        <div class="section-toolbar">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-bookings" placeholder="Search by PNR, passenger, train...">
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Booking ID (PNR)</th>
+                <th>Passenger</th>
+                <th>Train</th>
+                <th>Journey Date</th>
+                <th>Seat (Class)</th>
+                <th>Total Fare</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="table-body-bookings">
+              <!-- Rendered by admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           SECTION 7: MANAGE PAYMENTS
+           ==================================================================== -->
+      <section id="section-payments" class="admin-section">
+        <div class="admin-header">
+          <div class="admin-title-group">
+            <h2>Manage Payments</h2>
+            <p>Table: <code>PAYMENT (payment_id, booking_id, amount, mode, status)</code></p>
+          </div>
+        </div>
+
+        <div class="section-toolbar">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-payments" placeholder="Search payments by ID, PNR, mode...">
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Payment ID</th>
+                <th>Booking (PNR)</th>
+                <th>Amount</th>
+                <th>Payment Mode</th>
+                <th>Payment Status</th>
+                <th>Audit</th>
+              </tr>
+            </thead>
+            <tbody id="table-body-payments">
+              <!-- Rendered by admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ======================================================================
+       MODAL: PASSENGER ADD / EDIT
+       ====================================================================== -->
+  <div id="modal-passenger" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-passenger-title" class="modal-title">Add Passenger</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="form-passenger">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Passenger ID <span class="required">*</span></label>
+            <input type="text" id="input-passenger-id" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Name <span class="required">*</span></label>
+            <input type="text" id="input-passenger-name" class="form-control" required minlength="3">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Age <span class="required">*</span></label>
+              <input type="number" id="input-passenger-age" class="form-control" required min="1" max="120">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Gender <span class="required">*</span></label>
+              <select id="input-passenger-gender" class="form-control" required>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone <span class="required">*</span></label>
+            <input type="tel" id="input-passenger-phone" class="form-control" required pattern="[0-9]{10}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email <span class="required">*</span></label>
+            <input type="email" id="input-passenger-email" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary modal-close-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Passenger</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL: TRAIN ADD / EDIT
+       ====================================================================== -->
+  <div id="modal-train" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-train-title" class="modal-title">Add Train</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="form-train">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Train ID <span class="required">*</span></label>
+            <input type="text" id="input-train-id" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Train Name <span class="required">*</span></label>
+            <input type="text" id="input-train-name" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Train Type <span class="required">*</span></label>
+            <select id="input-train-type" class="form-control" required>
+              <option value="Rajdhani Express">Rajdhani Express</option>
+              <option value="Vande Bharat Express">Vande Bharat Express</option>
+              <option value="Shatabdi Express">Shatabdi Express</option>
+              <option value="Duronto Express">Duronto Express</option>
+              <option value="Superfast Express">Superfast Express</option>
+              <option value="Mail Express">Mail Express</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Total Seats <span class="required">*</span></label>
+            <input type="number" id="input-train-seats" class="form-control" required min="10" max="1500" value="500">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary modal-close-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Train</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL: STATION ADD / EDIT
+       ====================================================================== -->
+  <div id="modal-station" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-station-title" class="modal-title">Add Station</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="form-station">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Station ID <span class="required">*</span></label>
+            <input type="text" id="input-station-id" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Station Name <span class="required">*</span></label>
+            <input type="text" id="input-station-name" class="form-control" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">City <span class="required">*</span></label>
+              <input type="text" id="input-station-city" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">State <span class="required">*</span></label>
+              <input type="text" id="input-station-state" class="form-control" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary modal-close-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Station</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL: SCHEDULE ADD / EDIT
+       ====================================================================== -->
+  <div id="modal-schedule" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-schedule-title" class="modal-title">Add Schedule</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="form-schedule">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Schedule ID <span class="required">*</span></label>
+            <input type="text" id="input-sch-id" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Train <span class="required">*</span></label>
+            <select id="input-sch-train" class="form-control" required></select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Source Station <span class="required">*</span></label>
+              <select id="input-sch-src" class="form-control" required></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Destination Station <span class="required">*</span></label>
+              <select id="input-sch-dest" class="form-control" required></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Journey Date <span class="required">*</span></label>
+            <input type="date" id="input-sch-date" class="form-control" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Departure Time <span class="required">*</span></label>
+              <input type="time" id="input-sch-dep" class="form-control" required step="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Arrival Time <span class="required">*</span></label>
+              <input type="time" id="input-sch-arr" class="form-control" required step="1">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Base Fare (₹) <span class="required">*</span></label>
+            <input type="number" id="input-sch-fare" class="form-control" required min="50" step="10" value="1200">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary modal-close-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Schedule</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Global Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <h4>BharatRail Administrative Console</h4>
+        <p>Direct relational database interface for management of rolling trains, transit stations, schedules and passenger reservations.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Quick Jump</h5>
+        <ul>
+          <li><a href="index.html">User Portal Home</a></li>
+          <li><a href="trains.html">Search Trains</a></li>
+          <li><a href="my-bookings.html">User Bookings</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Entities</h5>
+        <ul>
+          <li><a href="#section-passengers">PASSENGER</a></li>
+          <li><a href="#section-trains">TRAIN</a></li>
+          <li><a href="#section-stations">STATION</a></li>
+          <li><a href="#section-schedules">SCHEDULE</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Database Actions</h5>
+        <ul>
+          <li><a href="#" onclick="window.RailwayAPI.resetMockData(); location.reload(); return false;">Reset Database</a></li>
+          <li><a href="#" onclick="alert('API Base URL: ' + window.RailwayAPI.getConfig().BASE_URL); return false;">API Health</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 Railway Reservation System - Admin Master Console</div>
+      <div>Compatible with Python Flask REST Backend & MySQL 8.0</div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/pages/admin.js"></script>
+</body>
+</html>

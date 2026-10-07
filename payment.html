@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Gateway | BharatRail System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚆</text></svg>">
+  <style>
+    .payment-modes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .payment-mode-tab {
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 0.85rem 0.5rem;
+      text-align: center;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.88rem;
+      transition: all 0.2s;
+    }
+    .payment-mode-tab:hover {
+      border-color: #3b82f6;
+      background: white;
+    }
+    .payment-mode-tab.selected {
+      border-color: #2563eb;
+      background: #eff6ff;
+      color: #1e40af;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top System Notice Bar -->
+  <aside class="top-notice-bar" aria-label="System status">
+    <div>
+      <span>🔒 256-Bit SSL Encrypted Railway Payment Gateway</span>
+    </div>
+    <div class="mode-pill" title="Toggle Backend Mode">
+      <span class="mode-dot"></span>
+      Backend Mode: Mock API
+    </div>
+  </aside>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar" role="navigation" aria-label="Main Navigation">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon">🚆</div>
+        <div class="brand-text">
+          BharatRail
+          <small>Journey Management System</small>
+        </div>
+      </a>
+
+      <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">☰</button>
+
+      <ul class="nav-links">
+        <li class="nav-item"><a href="index.html">Home</a></li>
+        <li class="nav-item"><a href="trains.html">Search Trains</a></li>
+        <li class="nav-item"><a href="pnr-status.html">PNR Status</a></li>
+        <li class="nav-item"><a href="my-bookings.html">My Bookings</a></li>
+        <li class="nav-item"><a href="passenger-register.html">Register Passenger</a></li>
+        <li class="nav-item"><a href="cancel-ticket.html">Cancel Ticket</a></li>
+        <li class="nav-item"><a href="admin.html" class="btn btn-sm nav-btn-admin">Admin Portal</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div class="container-narrow">
+
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Secure Payment Portal</h1>
+          <p class="page-subtitle">Complete transaction for Booking PNR confirmation into PAYMENT entity</p>
+        </div>
+        <div>
+          <span class="page-badge">MySQL Entity: PAYMENT</span>
+        </div>
+      </div>
+
+      <!-- Payment Summary Top Card -->
+      <div class="card" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); color: white;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8;">
+              Booking Reference / PNR
+            </div>
+            <div id="display-pnr" style="font-size: 1.8rem; font-weight: 800; font-family: monospace; color: #fbbf24;">
+              LOADING...
+            </div>
+            <div id="display-passenger" style="font-size: 0.88rem; color: #cbd5e1; margin-top: 0.25rem;"></div>
+            <div id="display-train" style="font-size: 0.85rem; color: #94a3b8;"></div>
+          </div>
+
+          <div style="text-align: right;">
+            <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8;">
+              Total Amount Payable
+            </div>
+            <div id="display-amount" style="font-size: 2.1rem; font-weight: 800; color: #ffffff;">
+              ₹0
+            </div>
+            <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">
+              Awaiting Payment
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Alert Message Box -->
+      <div id="payment-status-message" style="display: none; margin-bottom: 1.5rem;"></div>
+
+      <!-- Payment Mode Form Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">💳 Select Payment Mode</h2>
+          <small style="color: #64748b;">Instant e-ticket generation on confirmation</small>
+        </div>
+
+        <form id="payment-form">
+          <div class="payment-modes-grid">
+            <div class="payment-mode-tab selected" data-mode="UPI">
+              <div style="font-size: 1.4rem; margin-bottom: 0.2rem;">📱</div>
+              UPI / QR
+            </div>
+            <div class="payment-mode-tab" data-mode="Credit Card">
+              <div style="font-size: 1.4rem; margin-bottom: 0.2rem;">💳</div>
+              Credit Card
+            </div>
+            <div class="payment-mode-tab" data-mode="Debit Card">
+              <div style="font-size: 1.4rem; margin-bottom: 0.2rem;">🏦</div>
+              Debit Card
+            </div>
+            <div class="payment-mode-tab" data-mode="Net Banking">
+              <div style="font-size: 1.4rem; margin-bottom: 0.2rem;">🌐</div>
+              Net Banking
+            </div>
+          </div>
+
+          <!-- Subform 1: UPI -->
+          <div id="form-UPI" class="payment-subform">
+            <div class="form-group">
+              <label for="upi_id" class="form-label">Virtual Payment Address (VPA / UPI ID)</label>
+              <input type="text" id="upi_id" class="form-control" placeholder="e.g. yourname@okhdfcbank or 9876543210@paytm" value="railway.passenger@upi">
+            </div>
+            <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 1rem; text-align: center; margin-top: 1rem;">
+              <span style="font-size: 0.82rem; color: #64748b; display: block; margin-bottom: 0.4rem;">Or scan QR code using any UPI App:</span>
+              <div style="font-family: monospace; font-size: 0.8rem; background: #000; color: #fff; display: inline-block; padding: 6px 12px; border-radius: 4px;">
+                [ BHARAT-PAY QR CODE READY ]
+              </div>
+            </div>
+          </div>
+
+          <!-- Subform 2: Card -->
+          <div id="form-Credit Card" class="payment-subform" style="display: none;">
+            <div class="form-group">
+              <label for="card_num" class="form-label">Card Number</label>
+              <input type="text" id="card_num" class="form-control" placeholder="4111 2222 3333 4444" maxlength="19" value="4111 2222 3333 4444">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="card_exp" class="form-label">Expiry (MM/YY)</label>
+                <input type="text" id="card_exp" class="form-control" placeholder="12/28" value="12/28">
+              </div>
+              <div class="form-group">
+                <label for="card_cvv" class="form-label">CVV</label>
+                <input type="password" id="card_cvv" class="form-control" placeholder="123" maxlength="3" value="123">
+              </div>
+            </div>
+          </div>
+
+          <!-- Subform 3: Debit Card -->
+          <div id="form-Debit Card" class="payment-subform" style="display: none;">
+            <div class="form-group">
+              <label for="debit_card_num" class="form-label">Debit Card Number</label>
+              <input type="text" id="debit_card_num" class="form-control" placeholder="5222 3333 4444 5555" maxlength="19" value="5222 3333 4444 5555">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="debit_exp" class="form-label">Expiry (MM/YY)</label>
+                <input type="text" id="debit_exp" class="form-control" placeholder="08/29" value="08/29">
+              </div>
+              <div class="form-group">
+                <label for="debit_cvv" class="form-label">CVV</label>
+                <input type="password" id="debit_cvv" class="form-control" placeholder="456" maxlength="3" value="456">
+              </div>
+            </div>
+          </div>
+
+          <!-- Subform 4: Net Banking -->
+          <div id="form-Net Banking" class="payment-subform" style="display: none;">
+            <div class="form-group">
+              <label for="bank_select" class="form-label">Select Bank</label>
+              <select id="bank_select" class="form-control">
+                <option value="SBI">State Bank of India</option>
+                <option value="HDFC">HDFC Bank</option>
+                <option value="ICICI">ICICI Bank</option>
+                <option value="Axis">Axis Bank</option>
+                <option value="PNB">Punjab National Bank</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="card-footer" style="padding-bottom: 0;">
+            <a href="book-ticket.html" class="btn btn-secondary">Cancel</a>
+            <button type="submit" id="make-payment-btn" class="btn btn-accent btn-lg" style="min-width: 200px;">
+              Make Payment ➔
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <h4>🚆 BharatRail Reservation System</h4>
+        <p>A comprehensive Database Management Systems project modeling real-world passenger reservations, inventory schedules and payment lifecycle.</p>
+      </div>
+      <div class="footer-col">
+        <h5>User Services</h5>
+        <ul>
+          <li><a href="trains.html">Search Trains</a></li>
+          <li><a href="book-ticket.html">Book Ticket</a></li>
+          <li><a href="passenger-register.html">Passenger Registration</a></li>
+          <li><a href="pnr-status.html">Check PNR Status</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Manage Journey</h5>
+        <ul>
+          <li><a href="my-bookings.html">My Bookings</a></li>
+          <li><a href="cancel-ticket.html">Cancel Ticket</a></li>
+          <li><a href="admin.html">Admin Portal</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Backend & API</h5>
+        <ul>
+          <li><a href="#" onclick="window.RailwayAPI.resetMockData(); window.showToast('Demo data reset!', 'success'); setTimeout(() => location.reload(), 600); return false;">Reset Demo Data</a></li>
+          <li><a href="admin.html">API Dashboard</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 Railway Ticket Reservation & Journey Management System (DBMS Project)</div>
+      <div>Designed with HTML5, CSS3 & REST API architecture for Python Flask + MySQL</div>
+    </div>
+  </footer>
+
+  <!-- Core Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/pages/payment.js"></script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Electronic Reservation Slip (E-Ticket) | BharatRail System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚆</text></svg>">
+</head>
+<body>
+
+  <!-- Top System Notice Bar -->
+  <aside class="top-notice-bar no-print" aria-label="System status">
+    <div>
+      <span>✓ Booking Confirmed & Official Electronic Ticket Generated</span>
+    </div>
+    <div class="mode-pill" title="Toggle Backend Mode">
+      <span class="mode-dot"></span>
+      Backend Mode: Mock API
+    </div>
+  </aside>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar no-print" role="navigation" aria-label="Main Navigation">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon">🚆</div>
+        <div class="brand-text">
+          BharatRail
+          <small>Journey Management System</small>
+        </div>
+      </a>
+
+      <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">☰</button>
+
+      <ul class="nav-links">
+        <li class="nav-item"><a href="index.html">Home</a></li>
+        <li class="nav-item"><a href="trains.html">Search Trains</a></li>
+        <li class="nav-item"><a href="pnr-status.html">PNR Status</a></li>
+        <li class="nav-item"><a href="my-bookings.html">My Bookings</a></li>
+        <li class="nav-item"><a href="passenger-register.html">Register Passenger</a></li>
+        <li class="nav-item"><a href="cancel-ticket.html">Cancel Ticket</a></li>
+        <li class="nav-item"><a href="admin.html" class="btn btn-sm nav-btn-admin">Admin Portal</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div class="container">
+
+      <!-- Action Toolbar (Hidden in Print) -->
+      <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h1 class="page-title" style="color: #065f46; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🎉</span> Booking Confirmed Successfully!
+          </h1>
+          <p class="page-subtitle">Your railway reservation is secured. Present this electronic ticket or SMS during travel.</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+          <a href="my-bookings.html" class="btn btn-secondary">My Bookings</a>
+          <button id="print-ticket-btn" class="btn btn-primary">
+            🖨️ Print Ticket / Save PDF
+          </button>
+        </div>
+      </div>
+
+      <div id="ticket-loading" class="loading-state">
+        <div class="spinner spinner-primary"></div>
+        <p style="margin-top: 0.5rem;">Generating your official Electronic Reservation Slip...</p>
+      </div>
+
+      <!-- Printable E-Ticket Container -->
+      <div id="ticket-container" style="display: none;">
+        <div class="ticket-wrapper">
+
+          <!-- Ticket Header -->
+          <div class="ticket-header">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <div style="font-size: 2.2rem;">🚆</div>
+              <div>
+                <h2 style="font-size: 1.3rem; font-weight: 800; letter-spacing: -0.01em;">BHARAT RAILWAYS RESERVATION SLIP</h2>
+                <div style="font-size: 0.78rem; opacity: 0.85;">Ministry of Railways • Electronic Ticket (ERS)</div>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <span id="ticket-status-badge" class="badge badge-confirmed">CONFIRMED</span>
+              <div style="font-size: 0.75rem; margin-top: 0.35rem; opacity: 0.9;">IR-E-TICKET</div>
+            </div>
+          </div>
+
+          <!-- PNR & Meta Banner -->
+          <div class="ticket-pnr-banner">
+            <div>
+              <span style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700;">PNR / Booking Number:</span>
+              <div id="ticket-pnr" class="ticket-pnr-val">--------</div>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700;">Payment Status:</span>
+              <div>
+                <span id="ticket-payment-status" class="badge badge-success">PAID</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ticket Body -->
+          <div class="ticket-body">
+
+            <!-- Route Visual Display -->
+            <div class="ticket-route-display">
+              <div>
+                <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700;">Departure From</div>
+                <div id="ticket-source-name" style="font-size: 1.15rem; font-weight: 700; color: #0f172a;">Origin</div>
+                <div id="ticket-source-city" style="font-size: 0.82rem; color: #64748b;">City</div>
+                <div id="ticket-dep-time" style="font-size: 1.25rem; font-weight: 800; color: #1e3a8a; margin-top: 0.25rem;">--:--</div>
+              </div>
+
+              <div style="text-align: center; color: #64748b;">
+                <div style="font-size: 0.82rem; font-weight: 600;">Journey Date</div>
+                <div id="ticket-journey-date" style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin: 0.2rem 0;">Date</div>
+                <div style="font-size: 1.2rem;">➔</div>
+              </div>
+
+              <div style="text-align: right;">
+                <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700;">Arrival At</div>
+                <div id="ticket-dest-name" style="font-size: 1.15rem; font-weight: 700; color: #0f172a;">Destination</div>
+                <div id="ticket-dest-city" style="font-size: 0.82rem; color: #64748b;">City</div>
+                <div id="ticket-arr-time" style="font-size: 1.25rem; font-weight: 800; color: #1e3a8a; margin-top: 0.25rem;">--:--</div>
+              </div>
+            </div>
+
+            <!-- Train Details Summary -->
+            <div style="margin-bottom: 1.5rem; background: #fafafa; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.85rem 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <span style="font-size: 0.75rem; color: #64748b;">Train Name & Type:</span>
+                <div id="ticket-train-name" style="font-weight: 700; color: #0f172a; font-size: 1rem;">Train Name</div>
+              </div>
+              <div style="text-align: right;">
+                <div id="ticket-train-id" style="font-size: 0.85rem; font-weight: 600; color: #475569;">Train ID</div>
+              </div>
+            </div>
+
+            <!-- Passenger & Seat Table -->
+            <table class="ticket-table">
+              <thead>
+                <tr>
+                  <th>Passenger Name</th>
+                  <th>Coach</th>
+                  <th>Seat / Berth</th>
+                  <th>Class</th>
+                  <th>Total Fare</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <strong id="ticket-passenger-name">Passenger Name</strong>
+                    <div id="ticket-passenger-meta" style="font-size: 0.78rem; color: #64748b;">Details</div>
+                  </td>
+                  <td><strong id="ticket-coach" style="font-size: 1.1rem; color: #1e3a8a;">B2</strong></td>
+                  <td><strong id="ticket-seat-no" style="font-size: 1.1rem; color: #1e3a8a;">24</strong></td>
+                  <td><strong id="ticket-class">3A</strong></td>
+                  <td><strong id="ticket-fare" style="font-size: 1.15rem; color: #059669;">₹0</strong></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Instructions -->
+            <div style="border-top: 1px dashed #cbd5e1; padding-top: 1rem; font-size: 0.78rem; color: #64748b; line-height: 1.5;">
+              <strong>Important Travel Information:</strong>
+              <ul style="margin-left: 1.2rem; margin-top: 0.25rem;">
+                <li>Please carry an original government-approved photo ID card during journey.</li>
+                <li>Chart preparation is done 4 hours prior to scheduled train departure.</li>
+                <li>Refund eligibility is governed by standard railway cancellation rules.</li>
+              </ul>
+            </div>
+
+          </div>
+
+          <!-- Ticket Footer -->
+          <div class="ticket-footer">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <div id="ticket-qr-code" class="qr-code-placeholder">
+                QR CODE
+              </div>
+              <div style="font-size: 0.75rem; color: #64748b;">
+                <strong>Digital Verification Code</strong><br>
+                Valid across all rail zones and checking terminals.
+              </div>
+            </div>
+            <div style="text-align: right; font-size: 0.75rem; color: #94a3b8;">
+              System Generated • DBMS Project
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="footer no-print">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <h4>🚆 BharatRail Reservation System</h4>
+        <p>A comprehensive Database Management Systems project modeling real-world passenger reservations, inventory schedules and payment lifecycle.</p>
+      </div>
+      <div class="footer-col">
+        <h5>User Services</h5>
+        <ul>
+          <li><a href="trains.html">Search Trains</a></li>
+          <li><a href="book-ticket.html">Book Ticket</a></li>
+          <li><a href="passenger-register.html">Passenger Registration</a></li>
+          <li><a href="pnr-status.html">Check PNR Status</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Manage Journey</h5>
+        <ul>
+          <li><a href="my-bookings.html">My Bookings</a></li>
+          <li><a href="cancel-ticket.html">Cancel Ticket</a></li>
+          <li><a href="admin.html">Admin Portal</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Backend & API</h5>
+        <ul>
+          <li><a href="#" onclick="window.RailwayAPI.resetMockData(); window.showToast('Demo data reset!', 'success'); setTimeout(() => location.reload(), 600); return false;">Reset Demo Data</a></li>
+          <li><a href="admin.html">API Dashboard</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 Railway Ticket Reservation & Journey Management System (DBMS Project)</div>
+      <div>Designed with HTML5, CSS3 & REST API architecture for Python Flask + MySQL</div>
+    </div>
+  </footer>
+
+  <!-- Core Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/pages/confirmation.js"></script>
+</body>
+</html>

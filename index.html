@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BharatRail | Railway Ticket Reservation & Journey Management System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚆</text></svg>">
+</head>
+<body>
+
+  <!-- Top API Mode & System Notice Bar -->
+  <aside class="top-notice-bar" aria-label="System status">
+    <div>
+      <span>🚆 DBMS Project: Railway Reservation & Journey Management System</span>
+    </div>
+    <div class="mode-pill" title="Click to toggle between Mock localStorage and Live Flask Backend">
+      <span class="mode-dot"></span>
+      Backend Mode: Mock API
+    </div>
+  </aside>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar" role="navigation" aria-label="Main Navigation">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon">🚆</div>
+        <div class="brand-text">
+          BharatRail
+          <small>Journey Management System</small>
+        </div>
+      </a>
+
+      <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">☰</button>
+
+      <ul class="nav-links">
+        <li class="nav-item"><a href="index.html">Home</a></li>
+        <li class="nav-item"><a href="trains.html">Search Trains</a></li>
+        <li class="nav-item"><a href="pnr-status.html">PNR Status</a></li>
+        <li class="nav-item"><a href="my-bookings.html">My Bookings</a></li>
+        <li class="nav-item"><a href="passenger-register.html">Register Passenger</a></li>
+        <li class="nav-item"><a href="cancel-ticket.html">Cancel Ticket</a></li>
+        <li class="nav-item"><a href="admin.html" class="btn btn-sm nav-btn-admin">Admin Portal</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Main Hero Section -->
+  <header class="hero-section">
+    <div class="hero-container">
+      <div class="hero-badge">
+        <span>⚡ Seamless Railway Booking with Real-Time Inventory</span>
+      </div>
+      <h1 class="hero-title">
+        Experience Swift & Smart <span>Railway Reservations</span>
+      </h1>
+      <p class="hero-subtitle">
+        Book tickets across express, superfast and high-speed rail networks with instant PNR generation, live seat inventory and seamless journey tracking.
+      </p>
+    </div>
+  </header>
+
+  <!-- Hero Train Search Widget -->
+  <main class="main-content" style="padding-top: 0;">
+    <div class="container">
+      <section class="search-widget-card" aria-label="Search Trains Form">
+        <form id="hero-search-form" class="search-widget-form">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="source_station_id" class="form-label">From Station <span class="required">*</span></label>
+            <div class="input-with-icon">
+              <span class="input-icon">📍</span>
+              <select id="source_station_id" class="form-control" required>
+                <option value="">Loading stations...</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <button type="button" id="swap-stations" class="swap-stations-btn" title="Swap Stations" aria-label="Swap departure and arrival stations">
+              ⇄
+            </button>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="dest_station_id" class="form-label">To Station <span class="required">*</span></label>
+            <div class="input-with-icon">
+              <span class="input-icon">🎯</span>
+              <select id="dest_station_id" class="form-control" required>
+                <option value="">Loading stations...</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="journey_date" class="form-label">Journey Date <span class="required">*</span></label>
+            <div class="input-with-icon">
+              <span class="input-icon">📅</span>
+              <input type="date" id="journey_date" class="form-control" required>
+            </div>
+          </div>
+
+          <div>
+            <button type="submit" class="btn btn-accent btn-lg" style="height: 48px; width: 100%;">
+              Search Trains ➔
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Quick Links Section -->
+      <section style="margin: 3.5rem 0 2.5rem;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+          <h2 style="font-size: 1.6rem; color: #0f172a; font-weight: 700;">Quick Passenger Services</h2>
+          <p style="color: #64748b; font-size: 0.95rem;">Direct access to your booking lifecycle and travel utilities</p>
+        </div>
+
+        <div class="quick-links-grid">
+          <a href="pnr-status.html" class="quick-link-card">
+            <div class="quick-icon-wrapper" style="background: #eff6ff; color: #2563eb;">
+              🔍
+            </div>
+            <div>
+              <h4>PNR Status Enquiry</h4>
+              <p>Check live confirmation status, coach & seat allotment.</p>
+            </div>
+          </a>
+
+          <a href="my-bookings.html" class="quick-link-card">
+            <div class="quick-icon-wrapper" style="background: #ecfdf5; color: #10b981;">
+              📑
+            </div>
+            <div>
+              <h4>My Bookings</h4>
+              <p>View journey history, reprint e-tickets and manage travel.</p>
+            </div>
+          </a>
+
+          <a href="passenger-register.html" class="quick-link-card">
+            <div class="quick-icon-wrapper" style="background: #fffbeb; color: #d97706;">
+              👤
+            </div>
+            <div>
+              <h4>Passenger Registration</h4>
+              <p>Register passenger profile for fast, 1-click reservations.</p>
+            </div>
+          </a>
+
+          <a href="cancel-ticket.html" class="quick-link-card">
+            <div class="quick-link-card-body" style="display: flex; align-items: center; gap: 1rem;">
+              <div class="quick-icon-wrapper" style="background: #fef2f2; color: #ef4444;">
+                ✕
+              </div>
+              <div>
+                <h4>Cancel Ticket & Refund</h4>
+                <p>Instant cancellation with automated refund computation.</p>
+              </div>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <!-- Featured / Popular Express Routes -->
+      <section style="margin: 4rem 0;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h2 style="font-size: 1.6rem; color: #0f172a; font-weight: 700;">Popular Scheduled Express Routes</h2>
+            <p style="color: #64748b; font-size: 0.95rem;">High-demand intercity corridors with scheduled departures</p>
+          </div>
+          <a href="trains.html" class="btn btn-outline btn-sm">Explore All Trains ➔</a>
+        </div>
+
+        <div id="featured-routes-list" class="quick-links-grid" style="grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));">
+          <!-- Populated by home.js -->
+          <div class="loading-state">
+            <div class="spinner spinner-primary"></div>
+            <p style="margin-top: 0.5rem;">Loading active train schedules...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- DBMS Relational Architecture Highlight Box -->
+      <section class="card" style="background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%); border-left: 5px solid #2563eb; margin: 3rem 0;">
+        <div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap;">
+          <div style="font-size: 2.2rem; line-height: 1;">🗄️</div>
+          <div style="flex: 1;">
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.35rem;">
+              DBMS College Project Architectural Note
+            </h3>
+            <p style="font-size: 0.92rem; color: #475569; line-height: 1.6;">
+              This system models real relational data schemas spanning <strong>PASSENGER</strong>, <strong>TRAIN</strong>, <strong>STATION</strong>, <strong>SCHEDULE</strong>, <strong>BOOKING</strong>, <strong>TICKET</strong>, and <strong>PAYMENT</strong>. All actions perform asynchronous <code>fetch()</code> requests configured for direct integration with Python Flask REST API endpoints and a backend MySQL instance.
+            </p>
+            <div style="margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+              <span class="badge" style="background: #e0e7ff; color: #3730a3;">HTML5 / CSS3 / ES6</span>
+              <span class="badge" style="background: #e0f2fe; color: #0369a1;">REST API Ready</span>
+              <span class="badge" style="background: #fef3c7; color: #92400e;">Python Flask Compatible</span>
+              <span class="badge" style="background: #dcfce7; color: #166534;">MySQL 8.0 Entities</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <h4>🚆 BharatRail Reservation System</h4>
+        <p>A comprehensive Database Management Systems project modeling real-world passenger reservations, inventory schedules and payment lifecycle.</p>
+      </div>
+      <div class="footer-col">
+        <h5>User Services</h5>
+        <ul>
+          <li><a href="trains.html">Search Trains</a></li>
+          <li><a href="book-ticket.html">Book Ticket</a></li>
+          <li><a href="passenger-register.html">Passenger Registration</a></li>
+          <li><a href="pnr-status.html">Check PNR Status</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Manage Journey</h5>
+        <ul>
+          <li><a href="my-bookings.html">My Bookings</a></li>
+          <li><a href="cancel-ticket.html">Cancel Ticket</a></li>
+          <li><a href="admin.html">Admin Portal</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Backend & API</h5>
+        <ul>
+          <li><a href="#" onclick="window.RailwayAPI.resetMockData(); window.showToast('Demo data reset to factory default!', 'success'); setTimeout(() => location.reload(), 600); return false;">Reset Demo Data</a></li>
+          <li><a href="admin.html#section-dashboard">API Dashboard</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 Railway Ticket Reservation & Journey Management System (DBMS Project)</div>
+      <div>Designed with HTML5, CSS3 & REST API architecture for Python Flask + MySQL</div>
+    </div>
+  </footer>
+
+  <!-- Core Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/pages/home.js"></script>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cancel Ticket & Refund | BharatRail System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚆</text></svg>">
+</head>
+<body>
+
+  <!-- Top System Notice Bar -->
+  <aside class="top-notice-bar" aria-label="System status">
+    <div>
+      <span>✕ Railway Ticket Cancellation & Automated Refund Module</span>
+    </div>
+    <div class="mode-pill" title="Toggle Backend Mode">
+      <span class="mode-dot"></span>
+      Backend Mode: Mock API
+    </div>
+  </aside>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar" role="navigation" aria-label="Main Navigation">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon">🚆</div>
+        <div class="brand-text">
+          BharatRail
+          <small>Journey Management System</small>
+        </div>
+      </a>
+
+      <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">☰</button>
+
+      <ul class="nav-links">
+        <li class="nav-item"><a href="index.html">Home</a></li>
+        <li class="nav-item"><a href="trains.html">Search Trains</a></li>
+        <li class="nav-item"><a href="pnr-status.html">PNR Status</a></li>
+        <li class="nav-item"><a href="my-bookings.html">My Bookings</a></li>
+        <li class="nav-item"><a href="passenger-register.html">Register Passenger</a></li>
+        <li class="nav-item"><a href="cancel-ticket.html">Cancel Ticket</a></li>
+        <li class="nav-item"><a href="admin.html" class="btn btn-sm nav-btn-admin">Admin Portal</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div class="container-narrow">
+
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Ticket Cancellation & Refund</h1>
+          <p class="page-subtitle">Initiate passenger journey cancellation and compute automatic refund processing</p>
+        </div>
+        <div>
+          <span class="page-badge">Endpoint: POST /api/bookings/:id/cancel</span>
+        </div>
+      </div>
+
+      <!-- Lookup Form Card -->
+      <div class="card">
+        <form id="cancel-lookup-form">
+          <div class="form-row" style="align-items: flex-end;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="cancel-pnr-input" class="form-label">
+                Enter PNR / Booking ID <span class="required">*</span>
+              </label>
+              <input type="text" id="cancel-pnr-input" class="form-control" placeholder="e.g. BK829140" required style="font-family: monospace; text-transform: uppercase;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="cancel-booking-select" class="form-label">Active Bookings Shortcut</label>
+              <select id="cancel-booking-select" class="form-control">
+                <option value="">Loading active bookings...</option>
+              </select>
+            </div>
+
+            <div>
+              <button type="submit" class="btn btn-primary" style="height: 44px; width: 100%;">
+                Lookup 🔍
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div id="cancel-loading" class="loading-state" style="display: none;">
+        <div class="spinner spinner-primary"></div>
+        <p style="margin-top: 0.5rem;">Fetching reservation details for cancellation...</p>
+      </div>
+
+      <!-- Booking Cancellation Details Card -->
+      <div id="cancel-details-card" class="card" style="display: none;">
+        <div class="card-header">
+          <div>
+            <span style="font-size: 0.75rem; color: #64748b; text-transform: uppercase;">Booking Reference</span>
+            <div id="cancel-pnr" style="font-size: 1.4rem; font-weight: 800; font-family: monospace; color: #1e3a8a;">
+              BK000000
+            </div>
+          </div>
+          <div>
+            <span id="cancel-status" class="badge badge-confirmed">CONFIRMED</span>
+          </div>
+        </div>
+
+        <!-- Journey Summary -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem;">
+          <div class="form-row">
+            <div>
+              <span style="font-size: 0.75rem; color: #64748b;">Passenger:</span>
+              <div id="cancel-passenger" style="font-weight: 700; color: #0f172a;">Name</div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: #64748b;">Train:</span>
+              <div id="cancel-train" style="font-weight: 700; color: #0f172a;">Train Name</div>
+              <div id="cancel-route" style="font-size: 0.8rem; color: #64748b;">Route</div>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: #64748b;">Date & Seat:</span>
+              <div id="cancel-date" style="font-weight: 700; color: #0f172a;">Date</div>
+              <div id="cancel-seat" style="font-size: 0.8rem; color: #64748b;">Seat</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Refund Calculation Box -->
+        <div style="background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 8px; padding: 1.25rem;">
+          <h4 style="font-size: 1rem; font-weight: 700; color: #92400e; margin-bottom: 0.75rem;">
+            📊 Cancellation Charges & Refund Computation
+          </h4>
+
+          <div class="summary-row" style="font-size: 0.88rem;">
+            <span>Original Ticket Fare:</span>
+            <strong id="calc-original-fare">₹0</strong>
+          </div>
+          <div class="summary-row" style="font-size: 0.88rem; color: #b91c1c;">
+            <span>Cancellation Penalty (Clerkage / Fare rule):</span>
+            <strong id="calc-cancel-fee">- ₹0</strong>
+          </div>
+          <div class="summary-row total" style="color: #065f46; font-size: 1.15rem; border-top-color: #fde68a;">
+            <span>Estimated Refund Amount:</span>
+            <strong id="calc-refund-amount">₹0</strong>
+          </div>
+          <div style="font-size: 0.78rem; color: #92400e; margin-top: 0.5rem;">
+            Refund will be reversed to: <strong id="calc-payment-mode">Original Source</strong> within 2-3 banking days.
+          </div>
+        </div>
+
+        <!-- Already Cancelled Notice -->
+        <div id="already-cancelled-notice" style="display: none; margin-top: 1.5rem; background: #fef2f2; border: 1px solid #fecaca; padding: 1rem; border-radius: 8px; color: #991b1b; text-align: center;">
+          <strong>ℹ️ This booking is already CANCELLED and refunded.</strong>
+        </div>
+
+        <!-- Action Button -->
+        <div id="cancel-action-area" class="card-footer">
+          <a href="my-bookings.html" class="btn btn-secondary">Keep Ticket</a>
+          <button type="button" id="btn-confirm-cancel" class="btn btn-danger btn-lg">
+            Confirm Cancellation ➔
+          </button>
+        </div>
+      </div>
+
+      <!-- Refund Receipt Card (Shown after cancellation) -->
+      <div id="cancel-receipt-card" class="card" style="display: none; background: #ecfdf5; border: 1.5px solid #a7f3d0;">
+        <div style="text-align: center; padding: 1rem 0;">
+          <div style="font-size: 3rem; color: #059669;">✓</div>
+          <h3 style="font-size: 1.35rem; font-weight: 800; color: #065f46; margin: 0.5rem 0;">Cancellation Successful</h3>
+          <p style="color: #047857; font-size: 0.92rem;">
+            Booking <strong id="receipt-pnr" style="font-family: monospace;">BK000000</strong> has been successfully updated to <strong>CANCELLED</strong> in the database.
+          </p>
+          <div style="margin: 1.5rem auto; padding: 1rem; max-width: 320px; background: white; border-radius: 8px; border: 1px solid #a7f3d0;">
+            <div style="font-size: 0.8rem; color: #64748b;">Net Refund Processed:</div>
+            <div id="receipt-refund" style="font-size: 1.8rem; font-weight: 800; color: #059669;">₹0</div>
+            <span class="badge badge-success" style="margin-top: 0.25rem;">Refund Initiated</span>
+          </div>
+          <div>
+            <a href="my-bookings.html" class="btn btn-primary btn-sm">View In My Bookings</a>
+            <a href="trains.html" class="btn btn-outline btn-sm" style="margin-left: 0.5rem;">Book Another Train</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <h4>🚆 BharatRail Reservation System</h4>
+        <p>A comprehensive Database Management Systems project modeling real-world passenger reservations, inventory schedules and payment lifecycle.</p>
+      </div>
+      <div class="footer-col">
+        <h5>User Services</h5>
+        <ul>
+          <li><a href="trains.html">Search Trains</a></li>
+          <li><a href="book-ticket.html">Book Ticket</a></li>
+          <li><a href="passenger-register.html">Passenger Registration</a></li>
+          <li><a href="pnr-status.html">Check PNR Status</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Manage Journey</h5>
+        <ul>
+          <li><a href="my-bookings.html">My Bookings</a></li>
+          <li><a href="cancel-ticket.html">Cancel Ticket</a></li>
+          <li><a href="admin.html">Admin Portal</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Backend & API</h5>
+        <ul>
+          <li><a href="#" onclick="window.RailwayAPI.resetMockData(); window.showToast('Demo data reset!', 'success'); setTimeout(() => location.reload(), 600); return false;">Reset Demo Data</a></li>
+          <li><a href="admin.html">API Dashboard</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 Railway Ticket Reservation & Journey Management System (DBMS Project)</div>
+      <div>Designed with HTML5, CSS3 & REST API architecture for Python Flask + MySQL</div>
+    </div>
+  </footer>
+
+  <!-- Core Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/pages/cancel-ticket.js"></script>
+</body>
+</html>

@@ -1,11 +1,28 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import mysql.connector
-from datetime import datetime
+from datetime import datetime, date, time, timedelta
+from decimal import Decimal
 import uuid
 
+
+# ============================================================
+# FLASK APP
+# ============================================================
+
 app = Flask(__name__)
-CORS(app)
+
+CORS(
+    app,
+    resources={
+        r"/api/*": {
+            "origins": "*"
+        }
+    },
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+)
+
 
 # ============================================================
 # MYSQL DATABASE CONNECTION
@@ -24,11 +41,72 @@ def get_db():
 
 
 # ============================================================
+# JSON SERIALIZATION HELPER
+# ============================================================
+# MySQL returns:
+# DATE       -> datetime.date
+# TIME       -> datetime.timedelta
+# DECIMAL    -> Decimal
+#
+# Flask jsonify cannot directly serialize some of these.
+# This function converts them into JSON-compatible values.
+# ============================================================
+
+def make_json_safe(value):
+
+    if isinstance(value, dict):
+        return {
+            key: make_json_safe(val)
+            for key, val in value.items()
+        }
+
+    if isinstance(value, list):
+        return [
+            make_json_safe(item)
+            for item in value
+        ]
+
+    if isinstance(value, tuple):
+        return [
+            make_json_safe(item)
+            for item in value
+        ]
+
+    if isinstance(value, Decimal):
+        return float(value)
+
+    if isinstance(value, datetime):
+        return value.isoformat()
+
+    if isinstance(value, date):
+        return value.isoformat()
+
+    if isinstance(value, time):
+        return value.isoformat()
+
+    if isinstance(value, timedelta):
+        total_seconds = int(value.total_seconds())
+
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+    return value
+
+
+def json_response(payload, status_code=200):
+    return jsonify(make_json_safe(payload)), status_code
+
+
+# ============================================================
 # HOME
 # ============================================================
 
 @app.route("/")
 def home():
+
     return jsonify({
         "success": True,
         "message": "Railway Reservation API is running"
@@ -41,37 +119,52 @@ def home():
 
 @app.route("/api/stations", methods=["GET"])
 def get_stations():
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+
+    conn = None
+    cursor = None
 
     try:
+
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
+
         cursor.execute("""
-            SELECT station_id, station_name, city, state
+            SELECT
+                station_id,
+                station_name,
+                city,
+                state
             FROM STATION
             ORDER BY station_name
         """)
 
         stations = cursor.fetchall()
 
-        return jsonify({
+        return json_response({
             "success": True,
             "data": stations
         })
 
     except Exception as e:
-        return jsonify({
+
+        return json_response({
             "success": False,
             "error": str(e)
-        }), 500
+        }, 500)
 
     finally:
-        cursor.close()
-        conn.close()
+
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
 
 
 @app.route("/api/stations", methods=["POST"])
 def add_station():
-    data = request.get_json() or {}
+
+    data = request.get_json(silent=True) or {}
 
     station_id = data.get("station_id")
     station_name = data.get("station_name")
@@ -79,19 +172,30 @@ def add_station():
     state = data.get("state")
 
     if not station_id or not station_name:
-        return jsonify({
+
+        return json_response({
             "success": False,
             "error": "Station ID and station name are required"
-        }), 400
+        }, 400)
 
-    conn = get_db()
-    cursor = conn.cursor()
+    conn = None
+    cursor = None
 
     try:
+
+        conn = get_db()
+        cursor = conn.cursor()
+
         cursor.execute("""
             INSERT INTO STATION
-            (station_id, station_name, city, state)
-            VALUES (%s, %s, %s, %s)
+            (
+                station_id,
+                station_name,
+                city,
+                state
+            )
+            VALUES
+            (%s, %s, %s, %s)
         """, (
             station_id,
             station_name,
@@ -101,23 +205,29 @@ def add_station():
 
         conn.commit()
 
-        return jsonify({
+        return json_response({
             "success": True,
             "message": "Station added successfully",
             "station_id": station_id
-        }), 201
+        }, 201)
 
     except Exception as e:
-        conn.rollback()
 
-        return jsonify({
+        if conn:
+            conn.rollback()
+
+        return json_response({
             "success": False,
             "error": str(e)
-        }), 400
+        }, 400)
 
     finally:
-        cursor.close()
-        conn.close()
+
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
 
 
 # ============================================================
@@ -126,10 +236,15 @@ def add_station():
 
 @app.route("/api/trains", methods=["GET"])
 def get_trains():
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+
+    conn = None
+    cursor = None
 
     try:
+
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
+
         cursor.execute("""
             SELECT
                 train_id,
@@ -142,45 +257,62 @@ def get_trains():
 
         trains = cursor.fetchall()
 
-        return jsonify({
+        return json_response({
             "success": True,
             "data": trains
         })
 
     except Exception as e:
-        return jsonify({
+
+        return json_response({
             "success": False,
             "error": str(e)
-        }), 500
+        }, 500)
 
     finally:
-        cursor.close()
-        conn.close()
+
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
 
 
 @app.route("/api/trains", methods=["POST"])
 def add_train():
-    data = request.get_json() or {}
+
+    data = request.get_json(silent=True) or {}
 
     train_id = data.get("train_id")
     train_name = data.get("train_name")
     train_type = data.get("train_type")
     total_seats = data.get("total_seats")
 
-    if not train_id or not train_name or not total_seats:
-        return jsonify({
+    if not train_id or not train_name or total_seats is None:
+
+        return json_response({
             "success": False,
             "error": "Train ID, train name and total seats are required"
-        }), 400
+        }, 400)
 
-    conn = get_db()
-    cursor = conn.cursor()
+    conn = None
+    cursor = None
 
     try:
+
+        conn = get_db()
+        cursor = conn.cursor()
+
         cursor.execute("""
             INSERT INTO TRAIN
-            (train_id, train_name, train_type, total_seats)
-            VALUES (%s, %s, %s, %s)
+            (
+                train_id,
+                train_name,
+                train_type,
+                total_seats
+            )
+            VALUES
+            (%s, %s, %s, %s)
         """, (
             train_id,
             train_name,
@@ -190,23 +322,29 @@ def add_train():
 
         conn.commit()
 
-        return jsonify({
+        return json_response({
             "success": True,
             "message": "Train added successfully",
             "train_id": train_id
-        }), 201
+        }, 201)
 
     except Exception as e:
-        conn.rollback()
 
-        return jsonify({
+        if conn:
+            conn.rollback()
+
+        return json_response({
             "success": False,
             "error": str(e)
-        }), 400
+        }, 400)
 
     finally:
-        cursor.close()
-        conn.close()
+
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
 
 
 # ============================================================
@@ -218,12 +356,23 @@ def get_schedules():
 
     source = request.args.get("source")
     destination = request.args.get("destination")
-    journey_date = request.args.get("date")
 
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+    # Support BOTH:
+    # /api/schedules?date=2026-10-10
+    # /api/schedules?journey_date=2026-10-10
+
+    journey_date = (
+        request.args.get("journey_date")
+        or request.args.get("date")
+    )
+
+    conn = None
+    cursor = None
 
     try:
+
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
 
         query = """
             SELECT
@@ -241,18 +390,27 @@ def get_schedules():
                 s.base_fare,
                 t.total_seats
             FROM SCHEDULE s
+
             JOIN TRAIN t
                 ON s.train_id = t.train_id
+
             JOIN STATION ss
                 ON s.source_station_id = ss.station_id
+
             JOIN STATION ds
                 ON s.dest_station_id = ds.station_id
+
             WHERE 1 = 1
         """
 
         params = []
 
+        # ----------------------------------------------------
+        # SOURCE FILTER
+        # ----------------------------------------------------
+
         if source:
+
             query += """
                 AND (
                     s.source_station_id = %s
@@ -267,7 +425,12 @@ def get_schedules():
                 f"%{source}%"
             ])
 
+        # ----------------------------------------------------
+        # DESTINATION FILTER
+        # ----------------------------------------------------
+
         if destination:
+
             query += """
                 AND (
                     s.dest_station_id = %s
@@ -282,20 +445,40 @@ def get_schedules():
                 f"%{destination}%"
             ])
 
+        # ----------------------------------------------------
+        # DATE FILTER
+        # ----------------------------------------------------
+
         if journey_date:
+
             query += """
                 AND s.journey_date = %s
             """
 
             params.append(journey_date)
 
+        # ----------------------------------------------------
+        # SORT
+        # ----------------------------------------------------
+
         query += """
-            ORDER BY s.journey_date, s.departure_time
+            ORDER BY
+                s.journey_date,
+                s.departure_time
         """
 
         cursor.execute(query, params)
 
         schedules = cursor.fetchall()
+
+        # ----------------------------------------------------
+        # IMPORTANT:
+        # Convert MySQL DATE/TIME/DECIMAL values.
+        # This fixes:
+        # Object of type timedelta is not JSON serializable
+        # ----------------------------------------------------
+
+        schedules = make_json_safe(schedules)
 
         return jsonify({
             "success": True,
@@ -304,50 +487,83 @@ def get_schedules():
 
     except Exception as e:
 
-        return jsonify({
+        print("SCHEDULE ERROR:", str(e))
+
+        return json_response({
             "success": False,
             "error": str(e)
-        }), 500
+        }, 500)
 
     finally:
 
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
 
+        if conn:
+            conn.close()
+
+
+# ============================================================
+# GET SINGLE SCHEDULE
+# ============================================================
 
 @app.route("/api/schedules/<schedule_id>", methods=["GET"])
 def get_schedule(schedule_id):
 
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+    conn = None
+    cursor = None
 
     try:
 
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
+
         cursor.execute("""
             SELECT
-                s.*,
+                s.schedule_id,
+                s.train_id,
+                s.source_station_id,
+                s.dest_station_id,
+                s.journey_date,
+                s.departure_time,
+                s.arrival_time,
+                s.base_fare,
+
                 t.train_name,
                 t.train_type,
                 t.total_seats,
+
                 ss.station_name AS source_station,
-                ds.station_name AS destination_station
+                ss.city AS source_city,
+
+                ds.station_name AS destination_station,
+                ds.city AS destination_city
+
             FROM SCHEDULE s
+
             JOIN TRAIN t
                 ON s.train_id = t.train_id
+
             JOIN STATION ss
                 ON s.source_station_id = ss.station_id
+
             JOIN STATION ds
                 ON s.dest_station_id = ds.station_id
+
             WHERE s.schedule_id = %s
+
         """, (schedule_id,))
 
         schedule = cursor.fetchone()
 
         if not schedule:
-            return jsonify({
+
+            return json_response({
                 "success": False,
                 "error": "Schedule not found"
-            }), 404
+            }, 404)
+
+        schedule = make_json_safe(schedule)
 
         return jsonify({
             "success": True,
@@ -356,28 +572,34 @@ def get_schedule(schedule_id):
 
     except Exception as e:
 
-        return jsonify({
+        return json_response({
             "success": False,
             "error": str(e)
-        }), 500
+        }, 500)
 
     finally:
 
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
 
 
 # ============================================================
-# PASSENGERS
+# PASSENGERS - GET ALL
 # ============================================================
 
 @app.route("/api/passengers", methods=["GET"])
 def get_passengers():
 
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+    conn = None
+    cursor = None
 
     try:
+
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
 
         cursor.execute("""
             SELECT
@@ -393,31 +615,41 @@ def get_passengers():
 
         passengers = cursor.fetchall()
 
-        return jsonify({
+        return json_response({
             "success": True,
             "data": passengers
         })
 
     except Exception as e:
 
-        return jsonify({
+        return json_response({
             "success": False,
             "error": str(e)
-        }), 500
+        }, 500)
 
     finally:
 
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
 
+        if conn:
+            conn.close()
+
+
+# ============================================================
+# GET SINGLE PASSENGER
+# ============================================================
 
 @app.route("/api/passengers/<passenger_id>", methods=["GET"])
 def get_passenger(passenger_id):
 
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+    conn = None
+    cursor = None
 
     try:
+
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
 
         cursor.execute("""
             SELECT
@@ -434,33 +666,41 @@ def get_passenger(passenger_id):
         passenger = cursor.fetchone()
 
         if not passenger:
-            return jsonify({
+
+            return json_response({
                 "success": False,
                 "error": "Passenger not found"
-            }), 404
+            }, 404)
 
-        return jsonify({
+        return json_response({
             "success": True,
             "data": passenger
         })
 
     except Exception as e:
 
-        return jsonify({
+        return json_response({
             "success": False,
             "error": str(e)
-        }), 500
+        }, 500)
 
     finally:
 
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
 
+        if conn:
+            conn.close()
+
+
+# ============================================================
+# ADD PASSENGER
+# ============================================================
 
 @app.route("/api/passengers", methods=["POST"])
 def add_passenger():
 
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
 
     print("PASSENGER REQUEST:", data)
 
@@ -474,11 +714,12 @@ def add_passenger():
     if not passenger_id:
         passenger_id = "P" + uuid.uuid4().hex[:8].upper()
 
-    if not name or not age or not gender:
-        return jsonify({
+    if not name or age is None or not gender:
+
+        return json_response({
             "success": False,
             "error": "Name, age and gender are required"
-        }), 400
+        }, 400)
 
     gender_map = {
         "male": "M",
@@ -494,10 +735,13 @@ def add_passenger():
         str(gender)[:1].upper()
     )
 
-    conn = get_db()
-    cursor = conn.cursor()
+    conn = None
+    cursor = None
 
     try:
+
+        conn = get_db()
+        cursor = conn.cursor()
 
         cursor.execute("""
             INSERT INTO PASSENGER
@@ -522,36 +766,47 @@ def add_passenger():
 
         conn.commit()
 
-        return jsonify({
+        return json_response({
             "success": True,
             "message": "Passenger registered successfully",
             "passenger_id": passenger_id
-        }), 201
+        }, 201)
 
     except Exception as e:
 
-        conn.rollback()
+        if conn:
+            conn.rollback()
 
-        return jsonify({
+        return json_response({
             "success": False,
             "error": str(e)
-        }), 400
+        }, 400)
 
     finally:
 
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
 
+        if conn:
+            conn.close()
+
+
+# ============================================================
+# UPDATE PASSENGER
+# ============================================================
 
 @app.route("/api/passengers/<passenger_id>", methods=["PUT"])
 def update_passenger(passenger_id):
 
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
 
-    conn = get_db()
-    cursor = conn.cursor()
+    conn = None
+    cursor = None
 
     try:
+
+        conn = get_db()
+        cursor = conn.cursor()
 
         gender = data.get("gender", "")
 
@@ -590,38 +845,50 @@ def update_passenger(passenger_id):
         conn.commit()
 
         if cursor.rowcount == 0:
-            return jsonify({
+
+            return json_response({
                 "success": False,
                 "error": "Passenger not found"
-            }), 404
+            }, 404)
 
-        return jsonify({
+        return json_response({
             "success": True,
             "message": "Passenger updated successfully"
         })
 
     except Exception as e:
 
-        conn.rollback()
+        if conn:
+            conn.rollback()
 
-        return jsonify({
+        return json_response({
             "success": False,
             "error": str(e)
-        }), 400
+        }, 400)
 
     finally:
 
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
 
+        if conn:
+            conn.close()
+
+
+# ============================================================
+# DELETE PASSENGER
+# ============================================================
 
 @app.route("/api/passengers/<passenger_id>", methods=["DELETE"])
 def delete_passenger(passenger_id):
 
-    conn = get_db()
-    cursor = conn.cursor()
+    conn = None
+    cursor = None
 
     try:
+
+        conn = get_db()
+        cursor = conn.cursor()
 
         cursor.execute("""
             DELETE FROM PASSENGER
@@ -631,29 +898,34 @@ def delete_passenger(passenger_id):
         conn.commit()
 
         if cursor.rowcount == 0:
-            return jsonify({
+
+            return json_response({
                 "success": False,
                 "error": "Passenger not found"
-            }), 404
+            }, 404)
 
-        return jsonify({
+        return json_response({
             "success": True,
             "message": "Passenger deleted successfully"
         })
 
     except Exception as e:
 
-        conn.rollback()
+        if conn:
+            conn.rollback()
 
-        return jsonify({
+        return json_response({
             "success": False,
             "error": str(e)
-        }), 400
+        }, 400)
 
     finally:
 
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
 
 
 # ============================================================
@@ -663,10 +935,13 @@ def delete_passenger(passenger_id):
 @app.route("/api/bookings", methods=["GET"])
 def get_bookings():
 
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+    conn = None
+    cursor = None
 
     try:
+
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
 
         cursor.execute("""
             SELECT
@@ -678,34 +953,42 @@ def get_bookings():
                 b.booking_date,
                 b.total_fare,
                 b.status
+
             FROM BOOKING b
+
             JOIN PASSENGER p
                 ON b.passenger_id = p.passenger_id
+
             JOIN SCHEDULE s
                 ON b.schedule_id = s.schedule_id
+
             JOIN TRAIN t
                 ON s.train_id = t.train_id
+
             ORDER BY b.booking_date DESC
         """)
 
         bookings = cursor.fetchall()
 
-        return jsonify({
+        return json_response({
             "success": True,
             "data": bookings
         })
 
     except Exception as e:
 
-        return jsonify({
+        return json_response({
             "success": False,
             "error": str(e)
-        }), 500
+        }, 500)
 
     finally:
 
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
 
 
 # ============================================================
@@ -715,74 +998,97 @@ def get_bookings():
 @app.route("/api/bookings/<booking_id>", methods=["GET"])
 def get_booking(booking_id):
 
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+    conn = None
+    cursor = None
 
     try:
+
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
 
         cursor.execute("""
             SELECT
                 b.booking_id,
                 b.passenger_id,
+
                 p.name AS passenger_name,
                 p.phone,
                 p.email,
+
                 b.schedule_id,
+
                 t.train_id,
                 t.train_name,
+
                 ss.station_name AS source_station,
                 ds.station_name AS destination_station,
+
                 s.journey_date,
                 s.departure_time,
                 s.arrival_time,
+
                 b.booking_date,
                 b.total_fare,
                 b.status,
+
                 tk.ticket_id,
                 tk.coach,
                 tk.seat_no,
                 tk.`class`,
                 tk.fare
+
             FROM BOOKING b
+
             JOIN PASSENGER p
                 ON b.passenger_id = p.passenger_id
+
             JOIN SCHEDULE s
                 ON b.schedule_id = s.schedule_id
+
             JOIN TRAIN t
                 ON s.train_id = t.train_id
+
             JOIN STATION ss
                 ON s.source_station_id = ss.station_id
+
             JOIN STATION ds
                 ON s.dest_station_id = ds.station_id
+
             LEFT JOIN TICKET tk
                 ON b.booking_id = tk.booking_id
+
             WHERE b.booking_id = %s
+
         """, (booking_id,))
 
         booking = cursor.fetchone()
 
         if not booking:
-            return jsonify({
+
+            return json_response({
                 "success": False,
                 "error": "Booking not found"
-            }), 404
+            }, 404)
 
-        return jsonify({
+        return json_response({
             "success": True,
             "data": booking
         })
 
     except Exception as e:
 
-        return jsonify({
+        return json_response({
             "success": False,
             "error": str(e)
-        }), 500
+        }, 500)
 
     finally:
 
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
 
 
 # ============================================================
@@ -798,40 +1104,51 @@ def create_booking():
     print("BOOKING REQUEST DATA:", data)
     print("========================================")
 
-    # --------------------------------------------------------
-    # Get data from frontend
-    # --------------------------------------------------------
-
     passenger_id = data.get("passenger_id")
     schedule_id = data.get("schedule_id")
     total_fare = data.get("total_fare")
 
-    # booking_id is intentionally NOT required.
-    # Backend generates it automatically.
+    # --------------------------------------------------------
+    # VALIDATION
+    # --------------------------------------------------------
 
     if not passenger_id:
 
-        return jsonify({
+        return json_response({
             "success": False,
             "error": "Passenger ID is required",
             "message": "Passenger ID is required"
-        }), 400
+        }, 400)
 
     if not schedule_id:
 
-        return jsonify({
+        return json_response({
             "success": False,
             "error": "Schedule ID is required",
             "message": "Schedule ID is required"
-        }), 400
+        }, 400)
 
     if total_fare is None:
 
-        return jsonify({
+        return json_response({
             "success": False,
             "error": "Total fare is required",
             "message": "Total fare is required"
-        }), 400
+        }, 400)
+
+    try:
+
+        total_fare = float(total_fare)
+
+        if total_fare < 0:
+            raise ValueError
+
+    except (ValueError, TypeError):
+
+        return json_response({
+            "success": False,
+            "error": "Invalid total fare"
+        }, 400)
 
     conn = None
     cursor = None
@@ -839,14 +1156,17 @@ def create_booking():
     try:
 
         conn = get_db()
+
+        # Transaction cursor
         cursor = conn.cursor(dictionary=True)
 
         # ----------------------------------------------------
-        # Check passenger
+        # CHECK PASSENGER
         # ----------------------------------------------------
 
         cursor.execute("""
-            SELECT passenger_id
+            SELECT
+                passenger_id
             FROM PASSENGER
             WHERE passenger_id = %s
         """, (passenger_id,))
@@ -855,61 +1175,67 @@ def create_booking():
 
         if not passenger:
 
-            return jsonify({
+            return json_response({
                 "success": False,
                 "error": "Passenger not found"
-            }), 404
+            }, 404)
 
         # ----------------------------------------------------
-        # Check schedule
+        # CHECK SCHEDULE
         # ----------------------------------------------------
 
         cursor.execute("""
             SELECT
                 s.schedule_id,
                 s.train_id,
+                s.journey_date,
                 t.total_seats
+
             FROM SCHEDULE s
+
             JOIN TRAIN t
                 ON s.train_id = t.train_id
+
             WHERE s.schedule_id = %s
+
         """, (schedule_id,))
 
         schedule = cursor.fetchone()
 
         if not schedule:
 
-            return jsonify({
+            return json_response({
                 "success": False,
                 "error": "Schedule not found"
-            }), 404
+            }, 404)
 
         # ----------------------------------------------------
-        # Generate booking ID
+        # GENERATE BOOKING ID
         # ----------------------------------------------------
 
         booking_id = (
-            "BK" +
-            datetime.now().strftime("%y%m%d%H%M%S") +
-            uuid.uuid4().hex[:4].upper()
+            "BK"
+            + datetime.now().strftime("%y%m%d%H%M%S")
+            + uuid.uuid4().hex[:4].upper()
         )
 
         # ----------------------------------------------------
-        # Generate ticket ID
+        # GENERATE TICKET ID
         # ----------------------------------------------------
 
         ticket_id = "TK" + uuid.uuid4().hex[:8].upper()
 
         # ----------------------------------------------------
-        # Ticket details
+        # TICKET DETAILS
         # ----------------------------------------------------
 
         coach = data.get("coach") or "B1"
         ticket_class = data.get("class") or "3A"
+
         requested_seat = data.get("seat_no")
 
         # ----------------------------------------------------
-        # Seat allocation
+        # SEAT ALLOCATION
         # ----------------------------------------------------
 
         if requested_seat:
@@ -917,11 +1243,17 @@ def create_booking():
             seat_no = str(requested_seat)
 
             cursor.execute("""
-                SELECT ticket_id
+                SELECT
+                    ticket_id
+
                 FROM TICKET
+
                 WHERE schedule_id = %s
                 AND coach = %s
                 AND seat_no = %s
+
+                FOR UPDATE
+
             """, (
                 schedule_id,
                 coach,
@@ -932,10 +1264,10 @@ def create_booking():
 
             if existing_seat:
 
-                return jsonify({
+                return json_response({
                     "success": False,
                     "error": "Selected seat is already booked"
-                }), 409
+                }, 409)
 
         else:
 
@@ -943,14 +1275,24 @@ def create_booking():
 
             total_seats = int(schedule["total_seats"])
 
+            # ------------------------------------------------
+            # Find first free seat
+            # ------------------------------------------------
+
             for number in range(1, total_seats + 1):
 
                 cursor.execute("""
-                    SELECT ticket_id
+                    SELECT
+                        ticket_id
+
                     FROM TICKET
+
                     WHERE schedule_id = %s
                     AND coach = %s
                     AND seat_no = %s
+
+                    FOR UPDATE
+
                 """, (
                     schedule_id,
                     coach,
@@ -966,13 +1308,13 @@ def create_booking():
 
             if seat_no is None:
 
-                return jsonify({
+                return json_response({
                     "success": False,
                     "error": "No seats available for this train"
-                }), 409
+                }, 409)
 
         # ----------------------------------------------------
-        # Insert booking
+        # INSERT BOOKING
         # ----------------------------------------------------
 
         cursor.execute("""
@@ -985,19 +1327,21 @@ def create_booking():
                 total_fare,
                 status
             )
+
             VALUES
             (%s, %s, %s, %s, %s, %s)
+
         """, (
             booking_id,
             passenger_id,
             schedule_id,
             datetime.now().date(),
-            float(total_fare),
+            total_fare,
             "CONFIRMED"
         ))
 
         # ----------------------------------------------------
-        # Insert ticket
+        # INSERT TICKET
         # ----------------------------------------------------
 
         cursor.execute("""
@@ -1011,8 +1355,10 @@ def create_booking():
                 `class`,
                 fare
             )
+
             VALUES
             (%s, %s, %s, %s, %s, %s, %s)
+
         """, (
             ticket_id,
             booking_id,
@@ -1020,11 +1366,11 @@ def create_booking():
             coach,
             seat_no,
             ticket_class,
-            float(total_fare)
+            total_fare
         ))
 
         # ----------------------------------------------------
-        # Commit both records
+        # COMMIT
         # ----------------------------------------------------
 
         conn.commit()
@@ -1036,7 +1382,7 @@ def create_booking():
         print("SEAT:", seat_no)
         print("========================================")
 
-        return jsonify({
+        return json_response({
 
             "success": True,
 
@@ -1056,7 +1402,7 @@ def create_booking():
 
                 "schedule_id": schedule_id,
 
-                "total_fare": float(total_fare),
+                "total_fare": total_fare,
 
                 "coach": coach,
 
@@ -1065,9 +1411,10 @@ def create_booking():
                 "class": ticket_class,
 
                 "status": "CONFIRMED"
+
             }
 
-        }), 201
+        }, 201)
 
     except mysql.connector.Error as e:
 
@@ -1076,11 +1423,15 @@ def create_booking():
 
         print("MYSQL BOOKING ERROR:", str(e))
 
-        return jsonify({
+        return json_response({
+
             "success": False,
+
             "error": str(e),
+
             "message": str(e)
-        }), 400
+
+        }, 400)
 
     except Exception as e:
 
@@ -1089,11 +1440,15 @@ def create_booking():
 
         print("BOOKING ERROR:", str(e))
 
-        return jsonify({
+        return json_response({
+
             "success": False,
+
             "error": str(e),
+
             "message": str(e)
-        }), 500
+
+        }, 500)
 
     finally:
 
@@ -1108,60 +1463,76 @@ def create_booking():
 # CANCEL BOOKING
 # ============================================================
 
-@app.route("/api/bookings/<booking_id>/cancel", methods=["PUT", "POST"])
+@app.route(
+    "/api/bookings/<booking_id>/cancel",
+    methods=["PUT", "POST"]
+)
 def cancel_booking(booking_id):
 
-    conn = get_db()
-    cursor = conn.cursor()
+    conn = None
+    cursor = None
 
     try:
 
+        conn = get_db()
+        cursor = conn.cursor()
+
         cursor.execute("""
             UPDATE BOOKING
+
             SET status = 'CANCELLED'
+
             WHERE booking_id = %s
+
         """, (booking_id,))
 
         conn.commit()
 
         if cursor.rowcount == 0:
 
-            return jsonify({
+            return json_response({
                 "success": False,
                 "error": "Booking not found"
-            }), 404
+            }, 404)
 
-        return jsonify({
+        return json_response({
             "success": True,
             "message": "Booking cancelled successfully"
         })
 
     except Exception as e:
 
-        conn.rollback()
+        if conn:
+            conn.rollback()
 
-        return jsonify({
+        return json_response({
             "success": False,
             "error": str(e)
-        }), 400
+        }, 400)
 
     finally:
 
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
 
 
 # ============================================================
-# PAYMENTS
+# PAYMENTS - GET ALL
 # ============================================================
 
 @app.route("/api/payments", methods=["GET"])
 def get_payments():
 
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+    conn = None
+    cursor = None
 
     try:
+
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
 
         cursor.execute("""
             SELECT
@@ -1170,29 +1541,38 @@ def get_payments():
                 amount,
                 mode,
                 status
+
             FROM PAYMENT
+
             ORDER BY payment_id
         """)
 
         payments = cursor.fetchall()
 
-        return jsonify({
+        return json_response({
             "success": True,
             "data": payments
         })
 
     except Exception as e:
 
-        return jsonify({
+        return json_response({
             "success": False,
             "error": str(e)
-        }), 500
+        }, 500)
 
     finally:
 
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
 
+        if conn:
+            conn.close()
+
+
+# ============================================================
+# CREATE DEMO PAYMENT
+# ============================================================
 
 @app.route("/api/payments", methods=["POST"])
 def create_payment():
@@ -1201,6 +1581,7 @@ def create_payment():
 
     booking_id = data.get("booking_id")
     amount = data.get("amount")
+
     mode = (
         data.get("mode")
         or data.get("payment_mode")
@@ -1209,32 +1590,68 @@ def create_payment():
 
     if not booking_id or amount is None:
 
-        return jsonify({
+        return json_response({
             "success": False,
             "error": "Booking ID and amount are required"
-        }), 400
-
-    conn = get_db()
-    cursor = conn.cursor()
+        }, 400)
 
     try:
 
+        amount = float(amount)
+
+        if amount < 0:
+            raise ValueError
+
+    except (ValueError, TypeError):
+
+        return json_response({
+            "success": False,
+            "error": "Invalid payment amount"
+        }, 400)
+
+    conn = None
+    cursor = None
+
+    try:
+
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # ----------------------------------------------------
+        # CHECK BOOKING
+        # ----------------------------------------------------
+
         cursor.execute("""
-            SELECT booking_id
+            SELECT
+                booking_id
+
             FROM BOOKING
+
             WHERE booking_id = %s
+
         """, (booking_id,))
 
         booking = cursor.fetchone()
 
         if not booking:
 
-            return jsonify({
+            return json_response({
                 "success": False,
                 "error": "Booking not found"
-            }), 404
+            }, 404)
 
-        payment_id = "PAY" + uuid.uuid4().hex[:9].upper()
+        # ----------------------------------------------------
+        # GENERATE PAYMENT ID
+        # ----------------------------------------------------
+
+        payment_id = (
+            "PAY"
+            + uuid.uuid4().hex[:9].upper()
+        )
+
+        # ----------------------------------------------------
+        # INSERT DEMO PAYMENT
+        # ----------------------------------------------------
 
         cursor.execute("""
             INSERT INTO PAYMENT
@@ -1245,40 +1662,53 @@ def create_payment():
                 mode,
                 status
             )
+
             VALUES
             (%s, %s, %s, %s, %s)
+
         """, (
             payment_id,
             booking_id,
-            float(amount),
+            amount,
             mode,
             "SUCCESS"
         ))
 
         conn.commit()
 
-        return jsonify({
+        return json_response({
+
             "success": True,
+
             "message": "Payment successful",
+
             "payment_id": payment_id,
+
             "booking_id": booking_id,
-            "amount": float(amount),
+
+            "amount": amount,
+
             "status": "SUCCESS"
-        }), 201
+
+        }, 201)
 
     except Exception as e:
 
-        conn.rollback()
+        if conn:
+            conn.rollback()
 
-        return jsonify({
+        return json_response({
             "success": False,
             "error": str(e)
-        }), 400
+        }, 400)
 
     finally:
 
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
 
 
 # ============================================================
@@ -1288,10 +1718,17 @@ def create_payment():
 @app.route("/api/dashboard", methods=["GET"])
 def dashboard():
 
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+    conn = None
+    cursor = None
 
     try:
+
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
+
+        # ----------------------------------------------------
+        # PASSENGERS
+        # ----------------------------------------------------
 
         cursor.execute("""
             SELECT COUNT(*) AS count
@@ -1300,12 +1737,20 @@ def dashboard():
 
         passengers = cursor.fetchone()["count"]
 
+        # ----------------------------------------------------
+        # TRAINS
+        # ----------------------------------------------------
+
         cursor.execute("""
             SELECT COUNT(*) AS count
             FROM TRAIN
         """)
 
         trains = cursor.fetchone()["count"]
+
+        # ----------------------------------------------------
+        # STATIONS
+        # ----------------------------------------------------
 
         cursor.execute("""
             SELECT COUNT(*) AS count
@@ -1314,6 +1759,10 @@ def dashboard():
 
         stations = cursor.fetchone()["count"]
 
+        # ----------------------------------------------------
+        # BOOKINGS
+        # ----------------------------------------------------
+
         cursor.execute("""
             SELECT COUNT(*) AS count
             FROM BOOKING
@@ -1321,31 +1770,53 @@ def dashboard():
 
         bookings = cursor.fetchone()["count"]
 
+        # ----------------------------------------------------
+        # CONFIRMED BOOKINGS
+        # ----------------------------------------------------
+
         cursor.execute("""
             SELECT COUNT(*) AS count
+
             FROM BOOKING
+
             WHERE status = 'CONFIRMED'
+
         """)
 
         confirmed = cursor.fetchone()["count"]
 
+        # ----------------------------------------------------
+        # CANCELLED BOOKINGS
+        # ----------------------------------------------------
+
         cursor.execute("""
             SELECT COUNT(*) AS count
+
             FROM BOOKING
+
             WHERE status = 'CANCELLED'
+
         """)
 
         cancelled = cursor.fetchone()["count"]
 
+        # ----------------------------------------------------
+        # REVENUE
+        # ----------------------------------------------------
+
         cursor.execute("""
-            SELECT COALESCE(SUM(amount), 0) AS total
+            SELECT
+                COALESCE(SUM(amount), 0) AS total
+
             FROM PAYMENT
+
             WHERE status = 'SUCCESS'
+
         """)
 
         revenue = cursor.fetchone()["total"]
 
-        return jsonify({
+        return json_response({
 
             "success": True,
 
@@ -1363,22 +1834,67 @@ def dashboard():
 
                 "cancelled_bookings": cancelled,
 
-                "revenue": float(revenue)
+                "revenue": float(revenue or 0)
+
             }
 
         })
 
     except Exception as e:
 
-        return jsonify({
+        return json_response({
             "success": False,
             "error": str(e)
-        }), 500
+        }, 500)
 
     finally:
 
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
+
+
+# ============================================================
+# HEALTH CHECK
+# ============================================================
+
+@app.route("/api/health", methods=["GET"])
+def health():
+
+    conn = None
+    cursor = None
+
+    try:
+
+        conn = get_db()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT 1")
+
+        cursor.fetchone()
+
+        return jsonify({
+            "success": True,
+            "message": "Backend and MySQL are connected"
+        })
+
+    except Exception as e:
+
+        return json_response({
+            "success": False,
+            "message": "Database connection failed",
+            "error": str(e)
+        }, 500)
+
+    finally:
+
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
 
 
 # ============================================================
@@ -1413,7 +1929,9 @@ if __name__ == "__main__":
 
     print("====================================")
     print("Railway Reservation Backend")
-    print("Running on http://127.0.0.1:5000")
+    print("====================================")
+    print("Database : railway_reservation")
+    print("Server   : http://127.0.0.1:5000")
     print("====================================")
 
     app.run(

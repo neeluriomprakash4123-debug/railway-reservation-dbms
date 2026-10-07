@@ -24,7 +24,7 @@
 const API_CONFIG = {
   BASE_URL: window.API_BASE_URL || 'http://127.0.0.1:5000',
   // Toggle between Mock localStorage and Live Flask Backend
-  USE_MOCK: localStorage.getItem('railway_use_mock') !== 'false',
+  USE_MOCK: true,
   SIMULATE_LATENCY_MS: 300 // Simulates realistic network round-trip for spinners
 };
 

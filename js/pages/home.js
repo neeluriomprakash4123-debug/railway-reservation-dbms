@@ -237,46 +237,4 @@ async function loadFeaturedRoutes() {
     `;
   }
 }
-```
 
-Now save the file.
-
-### Then do this
-
-In PowerShell, **keep your Flask backend running** and run:
-
-```powershell
-cd "C:\Users\Omprakash\.gemini\antigravity\scratch\railway-reservation-system"
-```
-
-If your frontend server is already running, leave it running.
-
-Open:
-
-```text
-http://127.0.0.1:8000/index.html
-```
-
-Then press:
-
-**Ctrl + Shift + R**
-
-### What should happen
-
-You should now see your stations in the two dropdowns, such as:
-
-* Secunderabad Jn
-* Visakhapatnam Jn
-* Vijayawada Jn
-* Chennai Central
-
-And the **Featured Routes** section should load your train schedules.
-
-The two errors:
-
-```text
-res.data.map is not a function
-res.data.slice is not a function
-```
-
-should be gone.
